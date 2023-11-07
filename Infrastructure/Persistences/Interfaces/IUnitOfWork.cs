@@ -5,6 +5,7 @@
         // Declaración o matricula de nuestras interfacez a nivel de repositorio
 
         IGymRepository GymRepository { get; }
+        IAthleteRepository AthleteRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();

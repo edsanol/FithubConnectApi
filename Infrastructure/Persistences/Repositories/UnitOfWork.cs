@@ -9,10 +9,13 @@ namespace Infrastructure.Persistences.Repositories
 
         public IGymRepository GymRepository { get; private set; }
 
+        public IAthleteRepository AthleteRepository { get; private set; }
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             GymRepository = new GymRepository(_context) ?? throw new ArgumentNullException(nameof(GymRepository));
+            AthleteRepository = new AthleteRepository(_context) ?? throw new ArgumentNullException(nameof(AthleteRepository));
         }
 
         public void Dispose()

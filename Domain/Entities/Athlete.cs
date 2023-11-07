@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Domain.Entities;
+﻿namespace Domain.Entities;
 
 public partial class Athlete
 {
@@ -11,7 +8,7 @@ public partial class Athlete
 
     public string AthleteLastName { get; set; } = null!;
 
-    public DateOnly BirthDate { get; set; }
+    public DateTime BirthDate { get; set; }
 
     public string Email { get; set; } = null!;
 
@@ -25,15 +22,15 @@ public partial class Athlete
 
     public string? AuditCreateUser { get; set; }
 
-    public DateTime? AuditCreateDate { get; set; }
+    public DateTime? AuditCreateDate { get; set; } = null;
 
     public string? AuditUpdateUser { get; set; }
 
-    public DateTimeOffset? AuditUpdateDate { get; set; }
+    public DateTime? AuditUpdateDate { get; set; } = null;
 
     public string? AuditDeleteUser { get; set; }
 
-    public DateTime? AuditDeleteDate { get; set; }
+    public DateTime? AuditDeleteDate { get; set; } = null;
 
     public bool? Status { get; set; }
 

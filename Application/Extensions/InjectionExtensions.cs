@@ -21,6 +21,7 @@ namespace Application.Extensions
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             services.AddScoped<IGymApplication, GymApplication>();
+            services.AddScoped<IAthleteApplication, AthleteApplication>();
 
             return services;
         }

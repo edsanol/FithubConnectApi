@@ -67,8 +67,8 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpPost("/login")]
-        public async Task<IActionResult> LogymGym([FromBody] LoginRequestDto login)
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginGym([FromBody] LoginRequestDto login)
         {
             var response = await _gymApplication.LoginGym(login);
 
