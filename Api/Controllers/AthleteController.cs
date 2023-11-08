@@ -1,6 +1,9 @@
-﻿using Application.Dtos.Request;
+﻿using Application.Commons.Bases;
+using Application.Dtos.Request;
+using Application.Dtos.Response;
 using Application.Interfaces;
 using Infrastructure.Commons.Bases.Request;
+using Infrastructure.Commons.Bases.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -17,7 +20,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("List")]
-        public async Task<IActionResult> ListAthletes([FromBody] BaseFiltersRequest filters)
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<AthleteResponseDto>>>> ListAthletes([FromBody] BaseFiltersRequest filters)
         {
             var response = await _athleteApplication.ListAthletes(filters);
 
@@ -25,7 +28,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("{athleteId:int}")]
-        public async Task<IActionResult> AthleteById(int athleteId)
+        public async Task<ActionResult<BaseResponse<AthleteResponseDto>>> AthleteById(int athleteId)
         {
             var response = await _athleteApplication.AthleteById(athleteId);
 
@@ -33,7 +36,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("Register")]
-        public async Task<IActionResult> RegisterAthlete([FromBody] AthleteRequestDto request)
+        public async Task<ActionResult<BaseResponse<bool>>> RegisterAthlete([FromBody] AthleteRequestDto request)
         {
             var response = await _athleteApplication.RegisterAthlete(request);
 
@@ -44,7 +47,7 @@ namespace Api.Controllers
         }
 
         [HttpPut("Edit/{athleteId:int}")]
-        public async Task<IActionResult> EditAthlete(int athleteId, [FromBody] AthleteRequestDto request)
+        public async Task<ActionResult<BaseResponse<bool>>> EditAthlete(int athleteId, [FromBody] AthleteRequestDto request)
         {
             var response = await _athleteApplication.EditAthlete(athleteId, request);
 
@@ -52,7 +55,7 @@ namespace Api.Controllers
         }
 
         [HttpPut("Delete/{athleteId:int}")]
-        public async Task<IActionResult> DeleteAthlete(int athleteId)
+        public async Task<ActionResult<BaseResponse<bool>>> DeleteAthlete(int athleteId)
         {
             var response = await _athleteApplication.RemoveAthlete(athleteId);
 
@@ -60,7 +63,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("Login")]
-        public async Task<IActionResult> LoginAthlete([FromBody] LoginRequestDto request)
+        public async Task<ActionResult<BaseResponse<AthleteResponseDto>>> LoginAthlete([FromBody] LoginRequestDto request)
         {
             var response = await _athleteApplication.LoginAthlete(request);
 

@@ -1,6 +1,9 @@
-﻿using Application.Dtos.Request;
+﻿using Application.Commons.Bases;
+using Application.Dtos.Request;
+using Application.Dtos.Response;
 using Application.Interfaces;
 using Infrastructure.Commons.Bases.Request;
+using Infrastructure.Commons.Bases.Response;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -17,7 +20,7 @@ namespace Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ListGyms([FromBody] BaseFiltersRequest filters)
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<GymResponseDto>>>> ListGyms([FromBody] BaseFiltersRequest filters)
         {
             var response = await _gymApplication.ListGyms(filters);
 
@@ -25,7 +28,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("Select")]
-        public async Task<IActionResult> ListGymsSelect()
+        public async Task<ActionResult<BaseResponse<IEnumerable<GymSelectResponseDto>>>> ListGymsSelect()
         {
             var response = await _gymApplication.ListGymsSelect();
 
@@ -33,7 +36,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("{gymId:int}")]
-        public async Task<IActionResult> GymById(int gymId)
+        public async Task<ActionResult<BaseResponse<GymResponseDto>>> GymById(int gymId)
         {
             var response = await _gymApplication.GymById(gymId);
 
@@ -41,7 +44,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("Register")]
-        public async Task<IActionResult> RegisterGym([FromBody] GymRequestDto request)
+        public async Task<ActionResult<BaseResponse<bool>>> RegisterGym([FromBody] GymRequestDto request)
         {
             var response = await _gymApplication.RegisterGym(request);
 
@@ -52,7 +55,7 @@ namespace Api.Controllers
         }
 
         [HttpPut("Edit/{gymId:int}")]
-        public async Task<IActionResult> EditGym(int gymId, [FromBody] GymRequestDto request)
+        public async Task<ActionResult<BaseResponse<bool>>> EditGym(int gymId, [FromBody] GymRequestDto request)
         {
             var response = await _gymApplication.EditGym(gymId, request);
 
@@ -60,7 +63,7 @@ namespace Api.Controllers
         }
 
         [HttpPut("Delete/{gymId:int}")]
-        public async Task<IActionResult> RemoveGym(int gymId)
+        public async Task<ActionResult<BaseResponse<bool>>> RemoveGym(int gymId)
         {
             var response = await _gymApplication.RemoveGym(gymId);
 
@@ -68,7 +71,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginGym([FromBody] LoginRequestDto login)
+        public async Task<ActionResult<BaseResponse<GymResponseDto>>> LoginGym([FromBody] LoginRequestDto login)
         {
             var response = await _gymApplication.LoginGym(login);
 
