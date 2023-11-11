@@ -38,6 +38,8 @@ public partial class Athlete
 
     public virtual ICollection<AccessLog> AccessLogs { get; set; } = new List<AccessLog>();
 
+    public virtual ICollection<AthleteMembership> AthleteMemberships { get; set; } = new List<AthleteMembership>();
+
     public virtual ICollection<AthleteProgress> AthleteProgresses { get; set; } = new List<AthleteProgress>();
 
     public virtual ICollection<CardAccess> CardAccesses { get; set; } = new List<CardAccess>();

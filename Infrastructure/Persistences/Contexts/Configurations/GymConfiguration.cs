@@ -12,6 +12,8 @@ namespace Infrastructure.Persistences.Contexts.Configurations
 
             builder.ToTable("T_GYM");
 
+            builder.HasIndex(e => e.Email, "email_unique").IsUnique();
+
             builder.Property(e => e.GymId).HasColumnName("GymID");
             builder.Property(e => e.Status)
                 .IsRequired()

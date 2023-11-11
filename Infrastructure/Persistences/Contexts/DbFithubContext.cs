@@ -24,9 +24,13 @@ public partial class DbFithubContext : DbContext
 
     public virtual DbSet<Athlete> Athlete { get; set; }
 
+    public virtual DbSet<AthleteMembership> TAthleteMemberships { get; set; }
+
     public virtual DbSet<AthleteProgress> AthleteProgress { get; set; }
 
     public virtual DbSet<CardAccess> CardAccess { get; set; }
+
+    public virtual DbSet<Discount> TDiscounts { get; set; }
 
     public virtual DbSet<ExerciseMetric> ExerciseMetric { get; set; }
 
@@ -35,6 +39,8 @@ public partial class DbFithubContext : DbContext
     public virtual DbSet<Gym> Gym { get; set; }
 
     public virtual DbSet<MeasurementsProgress> MeasurementsProgress { get; set; }
+
+    public virtual DbSet<Membership> Memberships { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

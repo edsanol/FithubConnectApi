@@ -15,6 +15,9 @@ namespace Infrastructure.Persistences.Contexts.Configurations
             builder.HasIndex(e => e.Email, "unique email").IsUnique();
 
             builder.Property(e => e.AthleteId).HasColumnName("AthleteID");
+            builder.Property(e => e.AuditCreateDate).HasColumnType("timestamp without time zone");
+            builder.Property(e => e.AuditDeleteDate).HasColumnType("timestamp without time zone");
+            builder.Property(e => e.AuditUpdateDate).HasColumnType("timestamp without time zone");
             builder.Property(e => e.Status).HasDefaultValueSql("true");
 
             builder.HasOne(d => d.IdGymNavigation).WithMany(p => p.Athletes)
