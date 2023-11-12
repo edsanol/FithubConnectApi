@@ -140,9 +140,9 @@ namespace Application.Services
         public async Task<BaseResponse<bool>> EditGym(int gymID, GymRequestDto gymDto)
         {
             var response = new BaseResponse<bool>();
-            var gymEdit = await GymById(gymID);
+            var gymEdit = await _unitOfWork.GymRepository.GetGymById(gymID);
 
-            if (gymEdit.Data is null)
+            if (gymEdit is null)
             {
                 response.IsSuccess = false;
                 response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
@@ -150,6 +150,7 @@ namespace Application.Services
 
             var gym = _mapper.Map<Gym>(gymDto);
             gym.GymId = gymID;
+            gym.Password = gymEdit!.Password;
             response.Data = await _unitOfWork.GymRepository.EditGym(gym);
 
             if (response.Data)

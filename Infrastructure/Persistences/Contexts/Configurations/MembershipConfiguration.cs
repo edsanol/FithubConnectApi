@@ -13,7 +13,6 @@ namespace Infrastructure.Persistences.Contexts.Configurations
             builder.ToTable("T_MEMBERSHIP");
 
             builder.Property(e => e.MembershipId)
-                .ValueGeneratedNever()
                 .HasColumnName("MembershipID");
 
             builder.HasOne(d => d.IdGymNavigation).WithMany(p => p.Memberships)

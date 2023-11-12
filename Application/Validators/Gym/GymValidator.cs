@@ -16,9 +16,9 @@ namespace Application.Validators.Gym
                 .NotEmpty().WithMessage("El campo email no puede ser vacio")
                 .EmailAddress().WithMessage("El campo email no es valido");
 
-            RuleFor(x => x.Password)
-                .NotNull().WithMessage("El campo contraseña no puede ser nulo")
-                .NotEmpty().WithMessage("El campo contraseña no puede ser vacio");
+            //RuleFor(x => x.Password)
+            //    .NotNull().WithMessage("El campo contraseña no puede ser nulo")
+            //    .NotEmpty().WithMessage("El campo contraseña no puede ser vacio");
 
             RuleFor(x => x.Address)
                 .NotNull().WithMessage("El campo dirección no puede ser nulo")

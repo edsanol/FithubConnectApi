@@ -22,6 +22,7 @@ namespace Application.Extensions
 
             services.AddScoped<IGymApplication, GymApplication>();
             services.AddScoped<IAthleteApplication, AthleteApplication>();
+            services.AddScoped<IMembershipApplication, MembershipApplication>();
 
             return services;
         }
