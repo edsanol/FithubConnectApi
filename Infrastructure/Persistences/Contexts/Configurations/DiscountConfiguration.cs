@@ -13,13 +13,19 @@ namespace Infrastructure.Persistences.Contexts.Configurations
             builder.ToTable("T_DISCOUNTS");
 
             builder.Property(e => e.DiscountId)
-                .ValueGeneratedNever()
                 .HasColumnName("DiscountID");
 
             builder.HasOne(d => d.IdMembershipNavigation).WithMany(p => p.Discounts)
                 .HasForeignKey(d => d.IdMembership)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("membership_discount_relation");
+
+            builder.Property(e => e.Status).HasDefaultValueSql("true");
+
+            builder.HasOne(d => d.IdGymNavigation).WithMany(p => p.Discounts)
+                .HasForeignKey(d => d.IdGym)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("gym_discount_relation");
         }
     }
 }

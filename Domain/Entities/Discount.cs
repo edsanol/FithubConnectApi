@@ -8,9 +8,17 @@ public partial class Discount
 
     public decimal DiscountPercentage { get; set; }
 
-    public DateOnly StartDate { get; set; }
+    public DateTime StartDate { get; set; }
 
-    public DateOnly EndDate { get; set; }
+    public DateTime EndDate { get; set; }
+
+    public bool Status { get; set; }
+
+    public int IdGym { get; set; }
+
+    public string? Comments { get; set; }
 
     public virtual Membership IdMembershipNavigation { get; set; } = null!;
+
+    public virtual Gym IdGymNavigation { get; set; } = null!;
 }

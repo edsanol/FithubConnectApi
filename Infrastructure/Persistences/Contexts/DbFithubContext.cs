@@ -30,7 +30,7 @@ public partial class DbFithubContext : DbContext
 
     public virtual DbSet<CardAccess> CardAccess { get; set; }
 
-    public virtual DbSet<Discount> TDiscounts { get; set; }
+    public virtual DbSet<Discount> Discounts { get; set; }
 
     public virtual DbSet<ExerciseMetric> ExerciseMetric { get; set; }
 

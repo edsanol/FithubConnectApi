@@ -29,4 +29,6 @@ public partial class Gym
     public virtual ICollection<Athlete> Athletes { get; set; } = new List<Athlete>();
 
     public virtual ICollection<Membership> Memberships { get; set; } = new List<Membership>();
+
+    public virtual ICollection<Discount> Discounts { get; set; } = new List<Discount>();
 }

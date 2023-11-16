@@ -7,6 +7,7 @@
         IGymRepository GymRepository { get; }
         IAthleteRepository AthleteRepository { get; }
         IMembershipRepository MembershipRepository { get; }
+        IDiscountRepository DiscountRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();
