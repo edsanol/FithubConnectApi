@@ -13,5 +13,7 @@ namespace Infrastructure.Persistences.Interfaces
         Task<bool> EditGym(Gym gym);
         Task<bool> DeleteGym(int gymID);
         Task<Gym> LoginGym(string email);
+        Task<bool> ResetPasswordAsync(int gymId, string newPassword);
+        Task<bool> ChangePasswordAsync(int gymId, string newPassword);
     }
 }

@@ -11,6 +11,8 @@ namespace Application.Mappers
         public MembershipMappingsProfile()
         {
             CreateMap<Membership, MembershipResponseDto>()
+                .ForMember(dto => dto.Discount, opt => opt.MapFrom(src => src.PercentageDiscount()))
+                .ForMember(dto => dto.Total, opt => opt.MapFrom(src => src.CalculateTotal()))
                 .ReverseMap();
 
             CreateMap<BaseEntityResponse<Membership>, BaseEntityResponse<MembershipResponseDto>>()

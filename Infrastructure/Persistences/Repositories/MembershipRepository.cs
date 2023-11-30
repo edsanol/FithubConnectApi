@@ -4,6 +4,7 @@ using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Xml.Linq;
 
 namespace Infrastructure.Persistences.Repositories
 {
@@ -39,7 +40,27 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<Membership> GetMembershipById(int membershipID)
         {
-            var membership = await _context.Memberships.AsNoTracking().SingleOrDefaultAsync(x => x.MembershipId.Equals(membershipID));
+            var membership = await _context.Memberships
+                .Where(x => x.MembershipId.Equals(membershipID))
+                .Select(x => new Membership
+                {
+                    MembershipId = x.MembershipId,
+                    MembershipName = x.MembershipName,
+                    Cost = x.Cost,
+                    DurationInDays = x.DurationInDays,
+                    Description = x.Description,
+                    IdGym = x.IdGym,
+                    Discounts = x.Discounts
+                        .Select(d => new Discount
+                        {
+                            DiscountId = d.DiscountId,
+                            DiscountPercentage = d.DiscountPercentage,
+                            IdMembership = d.IdMembership,
+                            StartDate= d.StartDate,
+                            EndDate = d.EndDate,
+                            Comments = d.Comments,
+                        }).ToList()
+                }).AsNoTracking().SingleOrDefaultAsync();
 
             return membership!;
         }
@@ -48,8 +69,26 @@ namespace Infrastructure.Persistences.Repositories
         {
             var response = new BaseEntityResponse<Membership>();
 
-            var memberships = (from c in _context.Memberships
-                               select c).AsNoTracking().AsQueryable();
+            var memberships = _context.Memberships
+                .Select(x => new Membership
+                {
+                    MembershipId = x.MembershipId,
+                    MembershipName = x.MembershipName,
+                    Cost = x.Cost,
+                    DurationInDays = x.DurationInDays,
+                    Description = x.Description,
+                    IdGym = x.IdGym,
+                    Discounts = x.Discounts
+                        .Select(d => new Discount
+                        {
+                            DiscountId = d.DiscountId,
+                            DiscountPercentage = d.DiscountPercentage,
+                            IdMembership = d.IdMembership,
+                            StartDate = d.StartDate,
+                            EndDate = d.EndDate,
+                            Comments = d.Comments,
+                        }).ToList()
+                }).AsNoTracking().AsQueryable();
 
             if (filters.NumFilter is not null && !string.IsNullOrEmpty(filters.TextFilter))
             {

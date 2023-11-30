@@ -24,7 +24,7 @@ public partial class DbFithubContext : DbContext
 
     public virtual DbSet<Athlete> Athlete { get; set; }
 
-    public virtual DbSet<AthleteMembership> TAthleteMemberships { get; set; }
+    public virtual DbSet<AthleteMembership> AthleteMemberships { get; set; }
 
     public virtual DbSet<AthleteProgress> AthleteProgress { get; set; }
 

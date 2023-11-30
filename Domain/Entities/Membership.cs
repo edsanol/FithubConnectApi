@@ -19,4 +19,34 @@ public partial class Membership
     public virtual ICollection<AthleteMembership> AthleteMemberships { get; set; } = new List<AthleteMembership>();
 
     public virtual ICollection<Discount> Discounts { get; set; } = new List<Discount>();
+
+    public decimal CalculateTotal()
+    {
+        var today = DateTime.Today;
+        var discount = Discounts.Where(x => x.StartDate <= today && x.EndDate >= today).FirstOrDefault();
+
+        if (discount != null && today >= discount.StartDate && today <= discount.EndDate)
+        {
+            return Cost - (Cost * discount.DiscountPercentage / 100);
+        }
+        else
+        {
+            return Cost;
+        }
+    }
+
+    public decimal PercentageDiscount()
+    {
+        var today = DateTime.Today;
+        var discount = Discounts.Where(x => x.StartDate <= today && x.EndDate >= today).FirstOrDefault();
+
+        if (discount != null && today >= discount.StartDate && today <= discount.EndDate)
+        {
+            return discount.DiscountPercentage;
+        }
+        else
+        {
+            return 0;
+        }
+    }
 }

@@ -80,5 +80,38 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("RecoverPassword")]
+        public async Task<ActionResult<BaseResponse<bool>>> RecoverPassword([FromBody] RecoverPasswordRequestDto request)
+        {
+            var response = await _gymApplication.RecoverPassword(request);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpPost("ResetPassword")]
+        public async Task<ActionResult<BaseResponse<bool>>> ResetPassword([FromBody] PasswordResetRequestDto request)
+        {
+            var response = await _gymApplication.ResetPassword(request);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpPost("ChangePassword")]
+        public async Task<ActionResult<BaseResponse<bool>>> ChangePassword([FromBody] ChangePasswordRequestDto request)
+        {
+            var response = await _gymApplication.ChangePassword(request);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
     }
 }

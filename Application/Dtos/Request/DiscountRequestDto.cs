@@ -7,6 +7,7 @@
         public DateTime EndDate { get; set; }
         public int IdMembership { get; set; }
         public int IdGym { get; set; }
+        public bool Status { get; set; }
         public string? Comments { get; set; }
     }
 }

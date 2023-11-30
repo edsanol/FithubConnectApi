@@ -12,6 +12,18 @@ namespace Application.Mappers
         {
             CreateMap<Athlete, AthleteResponseDto>()
                 .ForMember(dest => dest.StateAthlete, opt => opt.MapFrom(src => src.Status.Equals(true) ? "Activo" : "Inactivo"))
+                .ForMember(dto => dto.StartDate, opt => opt.MapFrom(src => src.AthleteMemberships
+                    .Where(m => m.EndDate > DateOnly.FromDateTime(DateTime.Today))
+                    .OrderByDescending(m => m.StartDate)
+                    .FirstOrDefault().StartDate))
+                .ForMember(dto => dto.EndDate, opt => opt.MapFrom(src => src.AthleteMemberships
+                    .Where(m => m.EndDate > DateOnly.FromDateTime(DateTime.Today))
+                    .OrderByDescending(m => m.EndDate)
+                    .FirstOrDefault().EndDate))
+                .ForMember(dto => dto.MembershipName, opt => opt.MapFrom(src => src.AthleteMemberships
+                    .Where(m => m.EndDate > DateOnly.FromDateTime(DateTime.Today))
+                    .OrderByDescending(m => m.EndDate)
+                    .FirstOrDefault().IdMembershipNavigation.MembershipName))
                 .ReverseMap();
 
             CreateMap<BaseEntityResponse<Athlete>, BaseEntityResponse<AthleteResponseDto>>()

@@ -24,6 +24,8 @@ namespace Application.Extensions
             services.AddScoped<IAthleteApplication, AthleteApplication>();
             services.AddScoped<IMembershipApplication, MembershipApplication>();
             services.AddScoped<IDiscountApplication, DiscountApplication>();
+            services.AddScoped<IEmailServiceApplication, EmailServiceApplication>();
+            services.AddScoped<IJwtHandler, JwtHandler>();
 
             return services;
         }

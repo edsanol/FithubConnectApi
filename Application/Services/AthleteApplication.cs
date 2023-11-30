@@ -7,7 +7,9 @@ using AutoMapper;
 using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
+using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -24,13 +26,15 @@ namespace Application.Services
         private readonly IMapper _mapper;
         private readonly AthleteValidator _validationRules;
         private readonly IConfiguration _configuration;
+        private readonly DbFithubContext _context;
 
-        public AthleteApplication(IUnitOfWork unitOfWork, IMapper mapper, AthleteValidator validationRules, IConfiguration configuration)
+        public AthleteApplication(IUnitOfWork unitOfWork, IMapper mapper, AthleteValidator validationRules, IConfiguration configuration, DbFithubContext _context)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _validationRules = validationRules;
             _configuration = configuration;
+            this._context = _context;
         }
 
         public async Task<BaseResponse<AthleteResponseDto>> AthleteById(int athleteID)
@@ -135,6 +139,7 @@ namespace Application.Services
         public async Task<BaseResponse<bool>> RegisterAthlete(AthleteRequestDto athleteDto)
         {
             var response = new BaseResponse<bool>();
+            IDbContextTransaction? transaction = null;
 
             try
             {
@@ -148,27 +153,48 @@ namespace Application.Services
                     return response;
                 }
 
+                transaction = _context.Database.BeginTransaction();
                 var athlete = _mapper.Map<Athlete>(athleteDto);
                 athlete.AuditCreateDate = DateTime.Now;
                 athlete.AuditCreateUser = athleteDto.GymName;
+
                 var result = await _unitOfWork.AthleteRepository.RegisterAthlete(athlete);
 
-                if (result)
+                if (!result)
                 {
-                    response.IsSuccess = true;
-                    response.Data = result;
-                    response.Message = ReplyMessage.MESSAGE_SAVE;
+                    throw new Exception("Error al registrar al atleta");
                 }
-                else
+
+                var membershiptDuration = await _unitOfWork.MembershipRepository.GetMembershipById(athleteDto.IdMembership);
+                var athleteMembership = new AthleteMembership
                 {
-                    response.IsSuccess = false;
-                    response.Message = ReplyMessage.MESSAGE_FAILED;
+                    IdAthlete = athlete.AthleteId,
+                    IdMembership = athleteDto.IdMembership,
+                    StartDate = DateOnly.FromDateTime(DateTime.Now),
+                    EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(membershiptDuration.DurationInDays)),
+                };
+
+                var resultAthleteMembership = await _unitOfWork.AthleteMembershipRepository.RegisterAthleteMembership(athleteMembership);
+                if (!resultAthleteMembership)
+                {
+                    throw new Exception("Error al registrar la membresía del atleta");
                 }
+
+                transaction.Commit();
+
+                response.IsSuccess = true;
+                response.Data = result;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
             }
             catch (Exception ex)
             {
                 response.Message = ex.Message;
                 response.IsSuccess = false;
+                transaction?.Rollback();
+            }
+            finally
+            {
+                transaction?.Dispose();
             }
 
             return response;

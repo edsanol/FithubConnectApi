@@ -103,5 +103,23 @@ namespace Infrastructure.Persistences.Repositories
 
             return gym!;
         }
+
+        public async Task<bool> ResetPasswordAsync(int gymId, string newPassword)
+        {
+            var gym = await _context.Gym.AsNoTracking().FirstOrDefaultAsync(x => x.GymId.Equals(gymId));
+            gym.Password = newPassword;
+            _context.Update(gym);
+            var recordsAffected = await _context.SaveChangesAsync();
+            return recordsAffected > 0;
+        }
+
+        public async Task<bool> ChangePasswordAsync(int gymId, string newPassword)
+        {
+            var gym = await _context.Gym.AsNoTracking().FirstOrDefaultAsync(x => x.GymId.Equals(gymId));
+            gym.Password = newPassword;
+            _context.Update(gym);
+            var recordsAffected = await _context.SaveChangesAsync();
+            return recordsAffected > 0;
+        }
     }
 }

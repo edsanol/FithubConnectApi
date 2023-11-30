@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistences.Contexts.Configurations
 {
-    internal class MembershipConfiguration : IEntityTypeConfiguration<Membership>
+    public class MembershipConfiguration : IEntityTypeConfiguration<Membership>
     {
         public void Configure(EntityTypeBuilder<Membership> builder)
         {

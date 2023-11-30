@@ -12,5 +12,9 @@
         public bool? Status { get; set; }
         public string? StateAthlete { get; set; }
         public string? Token { get; set; } = null;
+        public DateOnly? StartDate { get; set; }
+        public DateOnly? EndDate { get; set; }
+        public string? MembershipName { get; set; }
+        public decimal? Cost { get; set; }
     }
 }

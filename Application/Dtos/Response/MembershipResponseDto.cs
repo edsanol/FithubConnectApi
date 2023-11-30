@@ -7,5 +7,7 @@
         public decimal Cost { get; set; }
         public int DurationInDays { get; set; }
         public string? Description { get; set; }
+        public decimal? Discount { get; set; }
+        public decimal? Total { get; set; }
     }
 }

@@ -9,10 +9,6 @@ using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Utilities.Static;
 using BC = BCrypt.Net.BCrypt;
 
@@ -24,13 +20,17 @@ namespace Application.Services
         private readonly IMapper _mapper;
         private readonly GymValidator _validationRules;
         private readonly IConfiguration _configuration;
+        private readonly IEmailServiceApplication _emailService;
+        private readonly IJwtHandler _jwtHandler;
 
-        public GymApplication(IUnitOfWork unitOfWork, IMapper mapper, GymValidator validationRules, IConfiguration configuration)
+        public GymApplication(IUnitOfWork unitOfWork, IMapper mapper, GymValidator validationRules, IConfiguration configuration, IEmailServiceApplication emailService, IJwtHandler jwtHandler)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _validationRules = validationRules;
             _configuration = configuration;
+            _emailService = emailService;
+            _jwtHandler = jwtHandler;
         }
 
         public async Task<BaseResponse<BaseEntityResponse<GymResponseDto>>> ListGyms(BaseFiltersRequest filters)
@@ -125,7 +125,7 @@ namespace Application.Services
                     response.Message = ReplyMessage.MESSAGE_FAILED;
                 }
 
-                
+
             }
 
             catch (Exception ex)
@@ -205,7 +205,7 @@ namespace Application.Services
                 {
                     response.IsSuccess = true;
                     response.Data = _mapper.Map<GymResponseDto>(gym);
-                    response.Data.Token = GenerateToken(gym);
+                    response.Data.Token = await _jwtHandler.GenerateToken(gym);
                     response.Message = ReplyMessage.MESSAGE_LOGIN;
                 }
                 else
@@ -223,28 +223,123 @@ namespace Application.Services
             return response;
         }
 
-        public string GenerateToken(Gym gym)
+        public async Task<BaseResponse<bool>> RecoverPassword(RecoverPasswordRequestDto request)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!));
+            var response = new BaseResponse<bool>();
+            var gym = await _unitOfWork.GymRepository.LoginGym(request.Email);
 
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
+            if (gym == null)
             {
-                new Claim(JwtRegisteredClaimNames.NameId, gym.GymId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, gym.Email.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Iat, Guid.NewGuid().ToString(), ClaimValueTypes.Integer64),
-            };
-            
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(int.Parse(_configuration["Jwt:Expires"]!)),
-                notBefore: DateTime.UtcNow,
-                signingCredentials: credentials
-            );
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                return response;
+            }
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var token = await _jwtHandler.GeneratePasswordResetToken(gym.GymId);
+            var resetLink = $"https://tuapp.com/reset-password?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(request.Email)}";
+            var emailBody = $"<p>Por favor haz clic en el siguiente enlace para restablecer tu contraseña:</p><p><a href='{resetLink}'>{resetLink}</a></p>";
+
+            await _emailService.SendEmailAsync("juanedinaelsanguino@gmail.com", "Recuperación de Contraseña", emailBody);
+
+            response.IsSuccess = true;
+            response.Message = "Password reset token generated.";
+            response.Data = true;
+
+            return response;
+        }
+
+        public async Task<BaseResponse<bool>> ResetPassword(PasswordResetRequestDto request)
+        {
+            var response = new BaseResponse<bool>();
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                response.IsSuccess = false;
+                response.Message = "Passwords do not match";
+                return response;
+            }
+
+            if (request.Token == null || request.Token == string.Empty)
+            {
+                response.IsSuccess = false;
+                response.Message = "Invalid or expired token";
+                return response;
+            }
+
+            bool isValidToken = _jwtHandler.ValidateToken(request.Token);
+
+            if (!isValidToken)
+            {
+                response.IsSuccess = false;
+                response.Message = "Invalid or expired token";
+                return response;
+            }
+
+            var gymId = _jwtHandler.ExtractGymIdFromToken(request.Token);
+
+            if (gymId == 0)
+            {
+                response.IsSuccess = false;
+                response.Message = "Invalid or expired token";
+                return response;
+            }
+
+            var password = BC.HashPassword(request.NewPassword);
+
+            if (password == null || password == string.Empty)
+            {
+                response.IsSuccess = false;
+                response.Message = "Invalid password";
+                return response;
+            }
+
+            var result = await _unitOfWork.GymRepository.ResetPasswordAsync(gymId, password);
+
+            if (!result)
+            {
+                response.IsSuccess = false;
+                response.Message = "Failed to reset password";
+                return response;
+            }
+
+            response.IsSuccess = result;
+            response.Data = result;
+            response.Message = result ? "Password reset successfully" : "Failed to reset password";
+            return response;
+        }
+
+        public async Task<BaseResponse<bool>> ChangePassword(ChangePasswordRequestDto request)
+        {
+            var response = new BaseResponse<bool>();
+            var gym = await _unitOfWork.GymRepository.LoginGym(request.Email!);
+
+            if (gym == null)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                return response;
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                response.IsSuccess = false;
+                response.Message = "Passwords do not match";
+                return response;
+            }
+
+            if (!BC.Verify(request.OldPassword, gym.Password))
+            {
+                response.IsSuccess = false;
+                response.Message = "Invalid old password";
+                return response;
+            }
+
+            var password = BC.HashPassword(request.NewPassword);
+
+            response.IsSuccess = true;
+            response.Data = await _unitOfWork.GymRepository.ChangePasswordAsync(gym.GymId, password);
+            response.Message = response.Data ? "Password changed successfully" : "Failed to change password";
+            return response;
         }
     }
 }

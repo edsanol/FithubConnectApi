@@ -18,7 +18,48 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<Athlete> AthleteById(int athleteID)
         {
-            var athlete = await _context.Athlete.AsNoTracking().FirstOrDefaultAsync(x => x.AthleteId.Equals(athleteID));
+            var athlete = await _context.Athlete
+                .Where(x => x.AthleteId.Equals(athleteID))
+                .Select(x => new Athlete
+                {
+                    AthleteId = x.AthleteId,
+                    AthleteName = x.AthleteName,
+                    AthleteLastName = x.AthleteLastName,
+                    BirthDate = x.BirthDate,
+                    Email = x.Email,
+                    PhoneNumber = x.PhoneNumber,
+                    Genre = x.Genre,
+                    Password = x.Password,
+                    IdGym = x.IdGym,
+                    AuditCreateUser = x.AuditCreateUser,
+                    AuditCreateDate = x.AuditCreateDate,
+                    AuditUpdateUser = x.AuditUpdateUser,
+                    AuditUpdateDate = x.AuditUpdateDate,
+                    AuditDeleteUser = x.AuditDeleteUser,
+                    AuditDeleteDate = x.AuditDeleteDate,
+                    Status = x.Status,
+                    AthleteMemberships = x.AthleteMemberships
+                        .Select(am => new AthleteMembership
+                        {
+                            StartDate = am.StartDate,
+                            EndDate = am.EndDate,
+                            IdMembershipNavigation = new Membership
+                            {
+                                MembershipName = am.IdMembershipNavigation.MembershipName,
+                                Cost = am.IdMembershipNavigation.Cost,
+                                Discounts = am.IdMembershipNavigation.Discounts
+                                    .Select(d => new Discount
+                                    {
+                                        DiscountId = d.DiscountId,
+                                        DiscountPercentage = d.DiscountPercentage,
+                                        IdMembership = d.IdMembership,
+                                        StartDate = d.StartDate,
+                                        EndDate = d.EndDate,
+                                        Status = d.Status
+                                    }).ToList()
+                            }
+                        }).ToList()
+                }).AsNoTracking().SingleOrDefaultAsync();
 
             return athlete!;
         }
@@ -46,8 +87,39 @@ namespace Infrastructure.Persistences.Repositories
         {
             var response = new BaseEntityResponse<Athlete>();
 
-            var athletes = (from c in _context.Athlete
-                            select c).AsNoTracking().AsQueryable();
+            var athletes = _context.Athlete
+                .Include(x => x.IdGymNavigation)
+                .Where(x => x.Status.Equals(true))
+                .Select(x => new Athlete
+                {
+                    AthleteId = x.AthleteId,
+                    AthleteName = x.AthleteName,
+                    AthleteLastName = x.AthleteLastName,
+                    BirthDate = x.BirthDate,
+                    Email = x.Email,
+                    PhoneNumber = x.PhoneNumber,
+                    Genre = x.Genre,
+                    Password = x.Password,
+                    IdGym = x.IdGym,
+                    AuditCreateUser = x.AuditCreateUser,
+                    AuditCreateDate = x.AuditCreateDate,
+                    AuditUpdateUser = x.AuditUpdateUser,
+                    AuditUpdateDate = x.AuditUpdateDate,
+                    AuditDeleteUser = x.AuditDeleteUser,
+                    AuditDeleteDate = x.AuditDeleteDate,
+                    Status = x.Status,
+                    AthleteMemberships = x.AthleteMemberships
+                        .Select(am => new AthleteMembership
+                        {
+                            StartDate = am.StartDate,
+                            EndDate = am.EndDate,
+                            IdMembershipNavigation = new Membership
+                            {
+                                MembershipName = am.IdMembershipNavigation.MembershipName,
+                                Cost = am.IdMembershipNavigation.Cost
+                            }
+                        }).ToList()
+                }).AsNoTracking().AsQueryable();
 
             if (filters.NumFilter is not null && !string.IsNullOrEmpty(filters.TextFilter))
             {
