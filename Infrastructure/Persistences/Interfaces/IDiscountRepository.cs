@@ -12,5 +12,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<bool> CreateDiscount(Discount discount);
         Task<bool> UpdateDiscount(Discount discount);
         Task<bool> DeleteDiscount(int discountID);
+        Task<bool> DiscountExists(int membershipID);
     }
 }

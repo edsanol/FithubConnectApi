@@ -65,7 +65,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpDelete("Delete/{membershipId:int}")]
+        [HttpPut("Delete/{membershipId:int}")]
         public async Task<ActionResult<BaseResponse<bool>>> RemoveMembership(int membershipId)
         {
             var response = await _membershipApplication.DeleteMembership(membershipId);

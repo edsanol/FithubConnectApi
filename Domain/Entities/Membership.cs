@@ -14,6 +14,8 @@ public partial class Membership
 
     public int IdGym { get; set; }
 
+    public bool Status { get; set; }
+
     public virtual Gym IdGymNavigation { get; set; } = null!;
 
     public virtual ICollection<AthleteMembership> AthleteMemberships { get; set; } = new List<AthleteMembership>();

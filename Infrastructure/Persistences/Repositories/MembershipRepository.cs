@@ -19,10 +19,17 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<bool> CreateMembership(Membership membership)
         {
-            await _context.AddAsync(membership);
-            var recordsAffected = await _context.SaveChangesAsync();
+            try
+            {
+                await _context.AddAsync(membership);
+                var recordsAffected = await _context.SaveChangesAsync();
 
-            return recordsAffected > 0;
+                return recordsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         public async Task<bool> DeleteMembership(int membershipID)
@@ -32,7 +39,8 @@ namespace Infrastructure.Persistences.Repositories
             if (membership is null)
                 return false;
 
-            _context.Remove(membership);
+            membership.Status = false;
+            _context.Update(membership);
             var recordsAffected = await _context.SaveChangesAsync();
 
             return recordsAffected > 0;

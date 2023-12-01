@@ -41,6 +41,15 @@ namespace Application.Services
                     return response;
                 }
 
+                var discountExists = await _unitOfWork.DiscountRepository.DiscountExists(discountDto.IdMembership);
+
+                if (discountExists)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Membership with discount";
+                    return response;
+                }
+
                 var discountCreate = _mapper.Map<Discount>(discountDto);
                 var result = await _unitOfWork.DiscountRepository.CreateDiscount(discountCreate);
 

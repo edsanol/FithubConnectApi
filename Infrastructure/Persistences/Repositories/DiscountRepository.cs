@@ -38,6 +38,24 @@ namespace Infrastructure.Persistences.Repositories
             return recordsAffected > 0;
         }
 
+        public async Task<bool> DiscountExists(int membershipID)
+        {
+            var discounts = (from c in _context.Discounts
+                             select c).AsNoTracking().AsQueryable();
+
+            var discount = await discounts.Where(x => x.IdMembership.Equals(membershipID)).ToListAsync();
+
+            if (discount is null) return false;
+
+            foreach (var item in discount)
+            {
+                if (Convert.ToDateTime(item.EndDate) >= DateTime.Now)
+                    return true;
+            }
+
+            return false;
+        }
+
         public async Task<Discount> GetDiscountById(int discountID)
         {
             var discount = await _context.Discounts.AsNoTracking().SingleOrDefaultAsync(x => x.DiscountId.Equals(discountID));
