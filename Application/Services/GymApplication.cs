@@ -239,7 +239,7 @@ namespace Application.Services
             var resetLink = $"https://tuapp.com/reset-password?token={Uri.EscapeDataString(token)}&email={Uri.EscapeDataString(request.Email)}";
             var emailBody = $"<p>Por favor haz clic en el siguiente enlace para restablecer tu contraseña:</p><p><a href='{resetLink}'>{resetLink}</a></p>";
 
-            await _emailService.SendEmailAsync("juanedinaelsanguino@gmail.com", "Recuperación de Contraseña", emailBody);
+            await _emailService.SendEmailAsync(request.Email, "Recuperación de Contraseña", emailBody);
 
             response.IsSuccess = true;
             response.Message = "Password reset token generated.";
