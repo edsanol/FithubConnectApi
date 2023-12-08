@@ -16,5 +16,6 @@
         public DateOnly? EndDate { get; set; }
         public string? MembershipName { get; set; }
         public decimal? Cost { get; set; }
+        public int? MembershipId { get; set; }
     }
 }

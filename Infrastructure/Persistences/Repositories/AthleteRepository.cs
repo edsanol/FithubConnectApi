@@ -47,6 +47,7 @@ namespace Infrastructure.Persistences.Repositories
                             {
                                 MembershipName = am.IdMembershipNavigation.MembershipName,
                                 Cost = am.IdMembershipNavigation.Cost,
+                                MembershipId = am.IdMembershipNavigation.MembershipId,
                                 Discounts = am.IdMembershipNavigation.Discounts
                                     .Select(d => new Discount
                                     {
@@ -116,7 +117,8 @@ namespace Infrastructure.Persistences.Repositories
                             IdMembershipNavigation = new Membership
                             {
                                 MembershipName = am.IdMembershipNavigation.MembershipName,
-                                Cost = am.IdMembershipNavigation.Cost
+                                Cost = am.IdMembershipNavigation.Cost,
+                                MembershipId = am.IdMembershipNavigation.MembershipId,
                             }
                         }).ToList()
                 }).AsNoTracking().AsQueryable();
