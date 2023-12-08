@@ -4,12 +4,14 @@ using Application.Dtos.Response;
 using Application.Interfaces;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AthleteController : ControllerBase
     {
         private readonly IAthleteApplication _athleteApplication;

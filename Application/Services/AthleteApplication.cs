@@ -10,11 +10,6 @@ using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Utilities.Static;
 using BC = BCrypt.Net.BCrypt;
 
@@ -25,16 +20,16 @@ namespace Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly AthleteValidator _validationRules;
-        private readonly IConfiguration _configuration;
         private readonly DbFithubContext _context;
+        private readonly IJwtHandler _jwtHandler;
 
-        public AthleteApplication(IUnitOfWork unitOfWork, IMapper mapper, AthleteValidator validationRules, IConfiguration configuration, DbFithubContext _context)
+        public AthleteApplication(IUnitOfWork unitOfWork, IMapper mapper, AthleteValidator validationRules, DbFithubContext _context, IJwtHandler jwtHandler)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _validationRules = validationRules;
-            _configuration = configuration;
             this._context = _context;
+            _jwtHandler = jwtHandler;
         }
 
         public async Task<BaseResponse<AthleteResponseDto>> AthleteById(int athleteID)
@@ -90,8 +85,9 @@ namespace Application.Services
 
         public async Task<BaseResponse<BaseEntityResponse<AthleteResponseDto>>> ListAthletes(BaseFiltersRequest filters)
         {
+            var gymID = _jwtHandler.ExtractGymIdFromToken();
             var response = new BaseResponse<BaseEntityResponse<AthleteResponseDto>>();
-            var athletes = await _unitOfWork.AthleteRepository.ListAthlete(filters);
+            var athletes = await _unitOfWork.AthleteRepository.ListAthlete(filters, gymID);
 
             if (athletes is not null)
             {
@@ -225,30 +221,6 @@ namespace Application.Services
             }
 
             return response;
-        }
-
-        public string GenerateToken(Gym gym)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!));
-
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.NameId, gym.GymId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, gym.Email.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Iat, Guid.NewGuid().ToString(), ClaimValueTypes.Integer64),
-            };
-
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(int.Parse(_configuration["Jwt:Expires"]!)),
-                notBefore: DateTime.UtcNow,
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

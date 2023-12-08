@@ -8,7 +8,6 @@ using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Interfaces;
-using Microsoft.Extensions.Configuration;
 using Utilities.Static;
 using BC = BCrypt.Net.BCrypt;
 
@@ -19,16 +18,14 @@ namespace Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly GymValidator _validationRules;
-        private readonly IConfiguration _configuration;
         private readonly IEmailServiceApplication _emailService;
         private readonly IJwtHandler _jwtHandler;
 
-        public GymApplication(IUnitOfWork unitOfWork, IMapper mapper, GymValidator validationRules, IConfiguration configuration, IEmailServiceApplication emailService, IJwtHandler jwtHandler)
+        public GymApplication(IUnitOfWork unitOfWork, IMapper mapper, GymValidator validationRules, IEmailServiceApplication emailService, IJwtHandler jwtHandler)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _validationRules = validationRules;
-            _configuration = configuration;
             _emailService = emailService;
             _jwtHandler = jwtHandler;
         }
@@ -275,7 +272,7 @@ namespace Application.Services
                 return response;
             }
 
-            var gymId = _jwtHandler.ExtractGymIdFromToken(request.Token);
+            var gymId = _jwtHandler.ExtractGymIdFromToken();
 
             if (gymId == 0)
             {

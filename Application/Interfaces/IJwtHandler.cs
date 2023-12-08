@@ -7,6 +7,6 @@ namespace Application.Interfaces
         Task<string> GenerateToken(Gym gym);
         Task<string> GeneratePasswordResetToken(int userId);
         bool ValidateToken(string token);
-        int ExtractGymIdFromToken(string token);
+        int ExtractGymIdFromToken();
     }
 }

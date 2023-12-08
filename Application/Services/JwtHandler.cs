@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -11,10 +12,12 @@ namespace Application.Services
     public class JwtHandler : IJwtHandler
     {
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor httpContextAccessor;
 
-        public JwtHandler(IConfiguration configuration)
+        public JwtHandler(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
+            this.httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<string> GenerateToken(Gym gym)
@@ -87,21 +90,20 @@ namespace Application.Services
             }
         }
 
-        public int ExtractGymIdFromToken(string token)
+        public int ExtractGymIdFromToken()
         {
             string? userId;
             var result = 0;
+            if (httpContextAccessor != null)
+            {
+                userId = httpContextAccessor.HttpContext!.User?.Claims?
+                            .FirstOrDefault(x => x.Type == "field1")?.Value;
 
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var jwtSecurityToken = handler.ReadJwtToken(token);
-                userId = jwtSecurityToken.Claims.First(claim => claim.Type == "field1").Value;
-                result = int.Parse(userId);
-            }
-            catch
-            {
-                return result;
+                if (userId != null)
+                {
+                    result = int.Parse(userId);
+                }
+                else result = 0;
             }
 
             return result;

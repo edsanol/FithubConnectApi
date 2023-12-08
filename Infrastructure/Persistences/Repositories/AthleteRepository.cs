@@ -83,13 +83,13 @@ namespace Infrastructure.Persistences.Repositories
             return recordsAffected > 0;
         }
 
-        public async Task<BaseEntityResponse<Athlete>> ListAthlete(BaseFiltersRequest filters)
+        public async Task<BaseEntityResponse<Athlete>> ListAthlete(BaseFiltersRequest filters, int gymID)
         {
             var response = new BaseEntityResponse<Athlete>();
 
             var athletes = _context.Athlete
                 .Include(x => x.IdGymNavigation)
-                .Where(x => x.Status.Equals(true))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status.Equals(true))
                 .Select(x => new Athlete
                 {
                     AthleteId = x.AthleteId,
@@ -126,10 +126,10 @@ namespace Infrastructure.Persistences.Repositories
                 switch (filters.NumFilter)
                 {
                     case 1:
-                        athletes = athletes.Where(x => x.AthleteName.Contains(filters.TextFilter));
+                        athletes = athletes.Where(x => x.IdGym.Equals(gymID) && x.AthleteName.Contains(filters.TextFilter));
                         break;
                     case 2:
-                        athletes = athletes.Where(x => x.AthleteLastName.Contains(filters.TextFilter));
+                        athletes = athletes.Where(x => x.IdGym.Equals(gymID) && x.AthleteLastName.Contains(filters.TextFilter));
                         break;
                     case 3:
                         athletes = athletes.Where(x => x.IdGym.Equals(Int32.Parse(filters.TextFilter)));
