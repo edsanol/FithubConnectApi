@@ -15,6 +15,7 @@ namespace Application.Interfaces
         Task<BaseResponse<bool>> EditGym(int gymID, GymRequestDto gymDto);
         Task<BaseResponse<bool>> RemoveGym(int gymID);
         Task<BaseResponse<GymResponseDto>> LoginGym(LoginRequestDto loginDto);
+        Task<BaseResponse<GymResponseDto>> RefreshAuthToken(string refreshToken);
         Task<BaseResponse<bool>> RecoverPassword(RecoverPasswordRequestDto request);
         Task<BaseResponse<bool>> ResetPassword(PasswordResetRequestDto request);
         Task<BaseResponse<bool>> ChangePassword(ChangePasswordRequestDto request);

@@ -4,6 +4,7 @@ using Application.Dtos.Response;
 using Application.Interfaces;
 using Application.Validators.Gym;
 using AutoMapper;
+using Azure.Core;
 using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
@@ -203,6 +204,7 @@ namespace Application.Services
                     response.IsSuccess = true;
                     response.Data = _mapper.Map<GymResponseDto>(gym);
                     response.Data.Token = await _jwtHandler.GenerateToken(gym);
+                    response.Data.RefreshToken = await _jwtHandler.GenerateRefreshToken(gym);
                     response.Message = ReplyMessage.MESSAGE_LOGIN;
                 }
                 else
@@ -336,6 +338,29 @@ namespace Application.Services
             response.IsSuccess = true;
             response.Data = await _unitOfWork.GymRepository.ChangePasswordAsync(gym.GymId, password);
             response.Message = response.Data ? "Password changed successfully" : "Failed to change password";
+            return response;
+        }
+
+        public async Task<BaseResponse<GymResponseDto>> RefreshAuthToken(string refreshToken)
+        {
+            var response = new BaseResponse<GymResponseDto>();
+            string email = _jwtHandler.GetEmailFromRefreshToken(refreshToken);
+            var gym = await _unitOfWork.GymRepository.LoginGym(email);
+
+            if (gym is not null)
+            {
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<GymResponseDto>(gym);
+                response.Data.Token = await _jwtHandler.GenerateToken(gym);
+                response.Data.RefreshToken = await _jwtHandler.GenerateRefreshToken(gym);
+                response.Message = ReplyMessage.MESSAGE_LOGIN;
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_LOGIN_FAILED;
+            }
+
             return response;
         }
     }

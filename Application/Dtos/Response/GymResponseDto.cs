@@ -13,6 +13,7 @@
         public bool? Status { get; set; }
         public string? StateGym { get; set; }
         public string? Token { get; set; } = null;
+        public string? RefreshToken { get; set; } = null;
         public string? Nit { get; set; } = null;
     }
 }

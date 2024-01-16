@@ -1,4 +1,5 @@
-﻿using Application.Commons.Bases;
+﻿using Api.Attributes;
+using Application.Commons.Bases;
 using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Interfaces;
@@ -110,6 +111,19 @@ namespace Api.Controllers
 
             if (response.IsSuccess == false)
                 return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpPost]
+        [ValidateRefreshToken]
+        [Route("refreshToken")]
+        public async Task<ActionResult<GymResponseDto>> RefreshAuthToken([FromHeader(Name = "RefreshToken")] string refreshToken)
+        {
+            var response = await _gymApplication.RefreshAuthToken(refreshToken);
+
+            if (response.IsSuccess == false)
+                return Unauthorized();
 
             return Ok(response);
         }

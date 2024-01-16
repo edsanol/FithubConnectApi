@@ -30,7 +30,21 @@ namespace Application.Services
                 new Claim("field4", Guid.NewGuid().ToString()),
             };
 
-            string stringToken = await GenerateTokenFunc(claims, 15);
+            string stringToken = await GenerateTokenFunc(claims, 60);
+            await Task.Run(() => stringToken);
+            return stringToken;
+        }
+
+        public async Task<string> GenerateRefreshToken(Gym gym)
+        {
+            var claims = new Claim[]
+            {
+                new Claim("field1", gym.Email.ToString()),
+                new Claim("field2", Guid.NewGuid().ToString()),
+                new Claim("field3", Guid.NewGuid().ToString()),
+            };
+
+            string stringToken = await GenerateTokenFunc(claims, 1440);
             await Task.Run(() => stringToken);
             return stringToken;
         }
@@ -105,6 +119,39 @@ namespace Application.Services
                 }
                 else result = 0;
             }
+
+            return result;
+        }
+
+        public string GetEmailFromRefreshToken(string refreshToken)
+        {
+            var result = string.Empty;
+            string jwtKey = _configuration["Jwt:Secret"]!;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out var validatedToken);
+                result = ((JwtSecurityToken)validatedToken).Claims
+                    .FirstOrDefault(x => x.Type == "field1")?.Value;
+            }
+            catch (Exception)
+            {
+                result = string.Empty;
+            }
+
+            result ??= string.Empty;
 
             return result;
         }

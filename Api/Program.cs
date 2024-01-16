@@ -1,4 +1,5 @@
 using Application.Extensions;
+using Domain.Entities.Configuration;
 using Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -6,6 +7,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 var Configuration = builder.Configuration;
+var jwtSection = Configuration.GetSection("Jwt");
+builder.Services.Configure<JwtConfiguration>(jwtSection);
+var jwtConfiguration = jwtSection.Get<JwtConfiguration>();
+
+string jwtKey = jwtConfiguration!.Secret;
 
 builder.Services.AddAuthentication(options =>
 {
@@ -19,7 +25,7 @@ builder.Services.AddAuthentication(options =>
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Secret"]!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ValidateIssuer = false,
             ValidateAudience = false,
             ClockSkew = TimeSpan.Zero
