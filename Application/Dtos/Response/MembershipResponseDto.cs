@@ -9,5 +9,6 @@
         public string? Description { get; set; }
         public decimal? Discount { get; set; }
         public decimal? Total { get; set; }
+        public bool Status { get; set; }
     }
 }

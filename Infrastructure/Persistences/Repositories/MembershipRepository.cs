@@ -86,6 +86,7 @@ namespace Infrastructure.Persistences.Repositories
                     DurationInDays = x.DurationInDays,
                     Description = x.Description,
                     IdGym = x.IdGym,
+                    Status = x.Status,
                     Discounts = x.Discounts
                         .Select(d => new Discount
                         {
