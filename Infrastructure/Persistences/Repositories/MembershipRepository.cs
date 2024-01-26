@@ -46,6 +46,15 @@ namespace Infrastructure.Persistences.Repositories
             return recordsAffected > 0;
         }
 
+        public async Task<int> GetAthletesByMembership(int membershipID)
+        {
+            var athletes = await _context.AthleteMemberships
+                .Where(x => x.IdMembership.Equals(membershipID) && x.EndDate > DateOnly.FromDateTime(DateTime.Now))
+                .CountAsync();
+
+            return athletes;
+        }
+
         public async Task<Membership> GetMembershipById(int membershipID)
         {
             var membership = await _context.Memberships
@@ -58,6 +67,7 @@ namespace Infrastructure.Persistences.Repositories
                     DurationInDays = x.DurationInDays,
                     Description = x.Description,
                     IdGym = x.IdGym,
+                    Status = x.Status,
                     Discounts = x.Discounts
                         .Select(d => new Discount
                         {
@@ -120,7 +130,7 @@ namespace Infrastructure.Persistences.Repositories
         public async Task<IEnumerable<Membership>> ListSelectMemberships(int gymID)
         {
             var memberships = await _context.Memberships
-                .Where(x => x.IdGym.Equals(gymID)).AsNoTracking().ToListAsync();
+                .Where(x => x.IdGym.Equals(gymID) && x.Status.Equals(true)).AsNoTracking().ToListAsync();
 
             return memberships;
         }

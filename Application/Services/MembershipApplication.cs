@@ -76,6 +76,15 @@ namespace Application.Services
                 response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
             }
 
+            var athletesCount = await _unitOfWork.MembershipRepository.GetAthletesByMembership(membershipID);
+
+            if (athletesCount > 0)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_FAILED;
+                return response;
+            }
+
             response.Data = await _unitOfWork.MembershipRepository.DeleteMembership(membershipID);
 
             if (response.Data)

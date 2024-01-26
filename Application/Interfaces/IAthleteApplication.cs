@@ -14,5 +14,6 @@ namespace Application.Interfaces
         Task<BaseResponse<bool>> EditAthlete(int athleteID, AthleteRequestDto athleteDto);
         Task<BaseResponse<bool>> RemoveAthlete(int athleteID);
         Task<BaseResponse<AthleteResponseDto>> LoginAthlete(LoginRequestDto loginDto);
+        Task<BaseResponse<bool>> UpdateMembershipToAthlete(MembershipToAthleteRequestDto membershipToAthleteDto);
     }
 }

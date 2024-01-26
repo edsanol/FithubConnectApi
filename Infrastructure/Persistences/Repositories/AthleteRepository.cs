@@ -59,7 +59,9 @@ namespace Infrastructure.Persistences.Repositories
                                         Status = d.Status
                                     }).ToList()
                             }
-                        }).ToList()
+                        })
+                        .Where(am => am.EndDate >= DateOnly.FromDateTime(DateTime.Now))
+                        .ToList()
                 }).AsNoTracking().SingleOrDefaultAsync();
 
             return athlete!;
@@ -125,13 +127,15 @@ namespace Infrastructure.Persistences.Repositories
 
             if (filters.NumFilter is not null && !string.IsNullOrEmpty(filters.TextFilter))
             {
+                var filterTextLower = filters.TextFilter.ToLower();
+
                 switch (filters.NumFilter)
                 {
                     case 1:
-                        athletes = athletes.Where(x => x.IdGym.Equals(gymID) && x.AthleteName.Contains(filters.TextFilter));
+                        athletes = athletes.Where(x => x.IdGym.Equals(gymID) && x.AthleteName.ToLower().Contains(filterTextLower));
                         break;
                     case 2:
-                        athletes = athletes.Where(x => x.IdGym.Equals(gymID) && x.AthleteLastName.Contains(filters.TextFilter));
+                        athletes = athletes.Where(x => x.IdGym.Equals(gymID) && x.AthleteLastName.ToLower().Contains(filterTextLower));
                         break;
                     case 3:
                         athletes = athletes.Where(x => x.IdGym.Equals(Int32.Parse(filters.TextFilter)));

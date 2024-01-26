@@ -74,5 +74,16 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("UpdateMembershipToAthlete")]
+        public async Task<ActionResult<BaseResponse<bool>>> UpdateMembershipToAthlete([FromBody] MembershipToAthleteRequestDto request)
+        {
+            var response = await _athleteApplication.UpdateMembershipToAthlete(request);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
     }
 }

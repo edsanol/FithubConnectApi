@@ -161,11 +161,11 @@ namespace Application.Services
                     throw new Exception("Error al registrar al atleta");
                 }
 
-                var membershiptDuration = await _unitOfWork.MembershipRepository.GetMembershipById(athleteDto.IdMembership);
+                var membershiptDuration = await _unitOfWork.MembershipRepository.GetMembershipById(athleteDto.MembershipId);
                 var athleteMembership = new AthleteMembership
                 {
                     IdAthlete = athlete.AthleteId,
-                    IdMembership = athleteDto.IdMembership,
+                    IdMembership = athleteDto.MembershipId,
                     StartDate = DateOnly.FromDateTime(DateTime.Now),
                     EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(membershiptDuration.DurationInDays)),
                 };
@@ -218,6 +218,62 @@ namespace Application.Services
             {
                 response.IsSuccess = false;
                 response.Message = ReplyMessage.MESSAGE_FAILED;
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<bool>> UpdateMembershipToAthlete(MembershipToAthleteRequestDto membershipToAthleteDto)
+        {
+            var response = new BaseResponse<bool>();
+            IDbContextTransaction? transaction = null;
+
+            try
+            {
+                var athleteEdit = await AthleteById(membershipToAthleteDto.AthleteId);
+
+                if (athleteEdit.Data is null)
+                {
+                    throw new Exception("El atleta no existe");
+                }
+
+                if (athleteEdit.Data.EndDate > DateOnly.FromDateTime(DateTime.Now))
+                {
+                    throw new Exception("El atleta ya cuenta con una membresía activa");
+                }
+
+                transaction = _context.Database.BeginTransaction();
+
+                var membershiptDuration = await _unitOfWork.MembershipRepository.GetMembershipById(membershipToAthleteDto.MembershipId);
+                var athleteMembership = new AthleteMembership
+                {
+                    IdAthlete = membershipToAthleteDto.AthleteId,
+                    IdMembership = membershipToAthleteDto.MembershipId,
+                    StartDate = DateOnly.FromDateTime(DateTime.Now),
+                    EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(membershiptDuration.DurationInDays)),
+                };
+
+                var resultAthleteMembership = await _unitOfWork.AthleteMembershipRepository.RegisterAthleteMembership(athleteMembership);
+                if (!resultAthleteMembership)
+                {
+                    throw new Exception("Error al registrar la membresía del atleta");
+                }
+
+                transaction.Commit();
+
+                response.IsSuccess = true;
+                response.Data = resultAthleteMembership;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+                response.IsSuccess = false;
+                transaction?.Rollback();
+            }
+            finally
+            {
+                transaction?.Dispose();
             }
 
             return response;

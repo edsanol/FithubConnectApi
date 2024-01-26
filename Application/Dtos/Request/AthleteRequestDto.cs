@@ -13,6 +13,6 @@
         public string? GymName { get; set; }
         public DateTime RegisterDate { get; set; }
         public bool? Status { get; set; } = true;
-        public int IdMembership { get; set; }
+        public int MembershipId { get; set; }
     }
 }

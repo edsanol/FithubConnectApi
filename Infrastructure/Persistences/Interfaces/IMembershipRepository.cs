@@ -12,5 +12,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<bool> CreateMembership(Membership membership);
         Task<bool> UpdateMembership(Membership membership);
         Task<bool> DeleteMembership(int membershipID);
+        Task<int> GetAthletesByMembership(int membershipID);
     }
 }
