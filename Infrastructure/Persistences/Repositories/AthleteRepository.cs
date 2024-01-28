@@ -37,6 +37,14 @@ namespace Infrastructure.Persistences.Repositories
                     AuditUpdateDate = x.AuditUpdateDate,
                     AuditDeleteUser = x.AuditDeleteUser,
                     AuditDeleteDate = x.AuditDeleteDate,
+                    CardAccesses = x.CardAccesses
+                        .Select(ca => new CardAccess
+                        {
+                            CardId = ca.CardId,
+                            CardNumber = ca.CardNumber,
+                            IdAthlete = ca.IdAthlete,
+                            Status = ca.Status
+                        }).ToList(),
                     Status = x.Status,
                     AthleteMemberships = x.AthleteMemberships
                         .Select(am => new AthleteMembership
@@ -110,6 +118,14 @@ namespace Infrastructure.Persistences.Repositories
                     AuditUpdateDate = x.AuditUpdateDate,
                     AuditDeleteUser = x.AuditDeleteUser,
                     AuditDeleteDate = x.AuditDeleteDate,
+                    CardAccesses = x.CardAccesses
+                        .Select(ca => new CardAccess
+                        {
+                            CardId = ca.CardId,
+                            CardNumber = ca.CardNumber,
+                            IdAthlete = ca.IdAthlete,
+                            Status = ca.Status
+                        }).ToList(),
                     Status = x.Status,
                     AthleteMemberships = x.AthleteMemberships
                         .Select(am => new AthleteMembership

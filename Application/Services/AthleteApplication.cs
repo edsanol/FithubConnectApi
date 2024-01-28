@@ -114,29 +114,96 @@ namespace Application.Services
         public async Task<BaseResponse<bool>> EditAthlete(int athleteID, AthleteRequestDto athleteDto)
         {
             var response = new BaseResponse<bool>();
-            var athleteEdit = await AthleteById(athleteID);
+            IDbContextTransaction? transaction = null;
 
-            if (athleteEdit.Data is null)
+            try
             {
-                response.IsSuccess = false;
-                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
-            }
+                var athleteEdit = await AthleteById(athleteID);
 
-            var athlete = _mapper.Map<Athlete>(athleteDto);
-            athlete.AthleteId = athleteID;
-            athlete.AuditUpdateDate = DateTime.Now;
-            athlete.AuditUpdateUser = athleteDto.GymName;
-            response.Data = await _unitOfWork.AthleteRepository.EditAthlete(athlete);
+                if (athleteEdit.Data is null)
+                {
+                    throw new Exception("El atleta no existe");
+                }
 
-            if (response.Data)
-            {
+                transaction = _context.Database.BeginTransaction();
+
+                var athlete = _mapper.Map<Athlete>(athleteDto);
+                athlete.AthleteId = athleteID;
+                athlete.AuditUpdateDate = DateTime.Now;
+                athlete.AuditUpdateUser = athleteDto.GymName;
+                response.Data = await _unitOfWork.AthleteRepository.EditAthlete(athlete);
+
+                if (!response.Data)
+                {
+                    throw new Exception("Error al editar al atleta");
+                }
+
+                var existCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(athleteEdit.Data.CardAccessCode);
+
+                if (existCardAccess != null && existCardAccess.Status == true && existCardAccess.IdAthlete != athleteID)
+                {
+                    throw new Exception("El código de acceso ya se encuentra registrado");
+                }
+
+                if (existCardAccess != null && existCardAccess.CardNumber != athleteDto.CardAccessCode)
+                {
+                    var updateCardAccess = existCardAccess;
+                    updateCardAccess.Status = false;
+
+                    var resultUpdateCardAccess = await _unitOfWork.CardAccessRepository.UnregisterCardAccess(updateCardAccess);
+
+                    if (!resultUpdateCardAccess)
+                    {
+                        throw new Exception("Error al actualizar el código de acceso");
+                    }
+
+                    var newCardAccess = new CardAccess
+                    {
+                        IdAthlete = athlete.AthleteId,
+                        CardNumber = athleteDto.CardAccessCode,
+                        ExpirationDate = null,
+                        Status = true,
+                    };
+
+                    var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(newCardAccess);
+                    if (!resultCardAccess)
+                    {
+                        throw new Exception("Error al registrar el código de acceso");
+                    }
+                }
+
+                if (existCardAccess is null)
+                {
+                    var newCardAccess = new CardAccess
+                    {
+                        IdAthlete = athlete.AthleteId,
+                        CardNumber = athleteDto.CardAccessCode,
+                        ExpirationDate = null,
+                        Status = true,
+                    };
+
+                    var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(newCardAccess);
+                    if (!resultCardAccess)
+                    {
+                        throw new Exception("Error al registrar el código de acceso");
+                    }
+                }
+
+                transaction.Commit();
+
                 response.IsSuccess = true;
-                response.Message = ReplyMessage.MESSAGE_UPDATE;
+                response.Data = true;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
             }
-            else
+            catch (Exception ex)
             {
+                response.Message = ex.Message;
                 response.IsSuccess = false;
-                response.Message = ReplyMessage.MESSAGE_FAILED;
+                transaction?.Rollback();
+            }
+            finally
+            {
+                transaction?.Dispose();
             }
 
             return response;

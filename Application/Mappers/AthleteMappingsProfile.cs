@@ -28,6 +28,10 @@ namespace Application.Mappers
                     .Where(m => m.EndDate > DateOnly.FromDateTime(DateTime.Today))
                     .OrderByDescending(m => m.EndDate)
                     .FirstOrDefault().IdMembershipNavigation.MembershipId))
+                .ForMember(dto => dto.CardAccessCode, opt => opt.MapFrom(src => src.CardAccesses
+                    .Where(ca => ca.Status.Equals(true))
+                    .OrderByDescending(ca => ca.CardId)
+                    .FirstOrDefault().CardNumber))
                 .ReverseMap();
 
             CreateMap<BaseEntityResponse<Athlete>, BaseEntityResponse<AthleteResponseDto>>()

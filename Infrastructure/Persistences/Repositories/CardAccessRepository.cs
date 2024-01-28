@@ -18,6 +18,7 @@ namespace Infrastructure.Persistences.Repositories
         {
             var cardAccess = await _context.CardAccess
                 .Where(x => x.CardNumber.Equals(cardCode))
+                .OrderByDescending(x => x.CardId)
                 .FirstOrDefaultAsync();
 
             if (cardAccess == null)

@@ -17,5 +17,6 @@
         public string? MembershipName { get; set; }
         public decimal? Cost { get; set; }
         public int? MembershipId { get; set; }
+        public string? CardAccessCode { get; set; } = string.Empty;
     }
 }
