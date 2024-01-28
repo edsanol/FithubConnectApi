@@ -32,6 +32,65 @@ namespace Application.Services
             _jwtHandler = jwtHandler;
         }
 
+        public async Task<bool> AccessAthlete(string accessAthleteDto)
+        {
+            bool response = false;
+            IDbContextTransaction? transaction = null;
+
+            try
+            {
+                var existCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(accessAthleteDto);
+
+                if (existCardAccess is null || existCardAccess.Status == false)
+                {
+                    throw new Exception("El código de acceso no existe");
+                }
+
+                var athlete = await AthleteById(existCardAccess.IdAthlete);
+
+                if (athlete.Data is null)
+                {
+                    throw new Exception("El atleta no existe");
+                }
+
+                if (athlete.Data.EndDate < DateOnly.FromDateTime(DateTime.Now))
+                {
+                    throw new Exception("El atleta no cuenta con una membresía activa");
+                }
+
+                transaction = _context.Database.BeginTransaction();
+
+                var access = new AccessLog
+                {
+                    IdAthlete = athlete.Data.AthleteId,
+                    IdCard = existCardAccess.CardId,
+                    AccessDateTime = DateTime.Now,
+                };
+
+                var resultAccess = await _unitOfWork.AccessLogRepository.RegisterAccessLog(access);
+
+                if (!resultAccess)
+                {
+                    throw new Exception("Error al registrar el acceso");
+                }
+
+                transaction.Commit();
+
+                response = true;
+            }
+            catch (Exception ex)
+            {
+                response = false;
+                transaction?.Rollback();
+            }
+            finally
+            {
+                transaction?.Dispose();
+            }
+
+            return response;
+        }
+
         public async Task<BaseResponse<AthleteResponseDto>> AthleteById(int athleteID)
         {
             var response = new BaseResponse<AthleteResponseDto>();
@@ -146,7 +205,7 @@ namespace Application.Services
                     response.IsSuccess = false;
                     response.Errors = validationResults.Errors;
                     response.Message = ReplyMessage.MESSAGE_VALIDATE;
-                    return response;
+                    throw new Exception("Error al validar los datos");
                 }
 
                 transaction = _context.Database.BeginTransaction();
@@ -174,6 +233,32 @@ namespace Application.Services
                 if (!resultAthleteMembership)
                 {
                     throw new Exception("Error al registrar la membresía del atleta");
+                }
+
+                if (athleteDto.CardAccessCode is null)
+                {
+                    throw new Exception("El código de acceso no puede ser nulo");
+                }
+
+                var existCardAccess = await _unitOfWork.CardAccessRepository.GetActiveAccessByCode(athleteDto.CardAccessCode);
+
+                if (existCardAccess)
+                {
+                    throw new Exception("El código de acceso ya se encuentra registrado");
+                }
+
+                var cardAccess = new CardAccess
+                {
+                    IdAthlete = athlete.AthleteId,
+                    CardNumber = athleteDto.CardAccessCode,
+                    ExpirationDate = null,
+                    Status = true,
+                };
+
+                var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(cardAccess);
+                if (!resultCardAccess)
+                {
+                    throw new Exception("Error al registrar el código de acceso");
                 }
 
                 transaction.Commit();

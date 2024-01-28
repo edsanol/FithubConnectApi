@@ -11,7 +11,7 @@ namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class AthleteController : ControllerBase
     {
         private readonly IAthleteApplication _athleteApplication;
@@ -81,6 +81,17 @@ namespace Api.Controllers
             var response = await _athleteApplication.UpdateMembershipToAthlete(request);
 
             if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpGet("AccessAthlete")]
+        public async Task<ActionResult<bool>> AccessAthlete(string request)
+        {
+            var response = await _athleteApplication.AccessAthlete(request);
+
+            if (response == false)
                 return BadRequest(response);
 
             return Ok(response);

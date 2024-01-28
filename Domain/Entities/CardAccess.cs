@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Domain.Entities;
+﻿namespace Domain.Entities;
 
 public partial class CardAccess
 {
@@ -11,7 +8,7 @@ public partial class CardAccess
 
     public string CardNumber { get; set; } = null!;
 
-    public DateOnly ExpirationDate { get; set; }
+    public DateOnly? ExpirationDate { get; set; }
 
     public bool? Status { get; set; }
 

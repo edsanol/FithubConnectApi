@@ -17,6 +17,10 @@ namespace Infrastructure.Persistences.Repositories
 
         public IAthleteMembershipRepository AthleteMembershipRepository { get; private set; }
 
+        public ICardAccessRepository CardAccessRepository { get; private set; }
+
+        public IAccessLogRepository AccessLogRepository { get; private set; }
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -25,6 +29,8 @@ namespace Infrastructure.Persistences.Repositories
             MembershipRepository = new MembershipRepository(_context) ?? throw new ArgumentNullException(nameof(MembershipRepository));
             DiscountRepository = new DiscountRepository(_context) ?? throw new ArgumentNullException(nameof(DiscountRepository));
             AthleteMembershipRepository = new AthleteMembershipRepository(_context) ?? throw new ArgumentNullException(nameof(AthleteMembershipRepository));
+            CardAccessRepository = new CardAccessRepository(_context) ?? throw new ArgumentNullException(nameof(CardAccessRepository));
+            AccessLogRepository = new AccessLogRepository(_context) ?? throw new ArgumentNullException(nameof(AccessLogRepository));
         }
 
         public void Dispose()

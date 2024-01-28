@@ -14,5 +14,6 @@
         public DateTime RegisterDate { get; set; }
         public bool? Status { get; set; } = true;
         public int MembershipId { get; set; }
+        public string? CardAccessCode { get; set; } = string.Empty;
     }
 }
