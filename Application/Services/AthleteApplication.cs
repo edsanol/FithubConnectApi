@@ -145,6 +145,13 @@ namespace Application.Services
                     throw new Exception("El código de acceso ya se encuentra registrado");
                 }
 
+                var existNewCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(athleteDto.CardAccessCode);
+
+                if (existNewCardAccess != null && existNewCardAccess.Status == true && existNewCardAccess.IdAthlete != athleteID)
+                {
+                    throw new Exception("El código de acceso ya se encuentra registrado");
+                }
+
                 if (existCardAccess != null && existCardAccess.CardNumber != athleteDto.CardAccessCode)
                 {
                     var updateCardAccess = existCardAccess;

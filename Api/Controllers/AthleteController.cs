@@ -53,6 +53,9 @@ namespace Api.Controllers
         {
             var response = await _athleteApplication.EditAthlete(athleteId, request);
 
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
             return Ok(response);
         }
 
