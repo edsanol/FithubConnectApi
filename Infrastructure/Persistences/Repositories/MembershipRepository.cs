@@ -135,6 +135,33 @@ namespace Infrastructure.Persistences.Repositories
             return memberships;
         }
 
+        public async Task<IEnumerable<DashboardPieResponseDto>> MembershipPercentage(int gymID)
+        {
+            // get the total number of athletes
+            var totalAthletes = await _context.AthleteMemberships
+                .Where(x => x.IdAthleteNavigation.IdGym.Equals(gymID) && x.EndDate >= DateOnly.FromDateTime(DateTime.Now))
+                .CountAsync();
+
+            // get the number of athletes by membership
+            var memberships = await _context.Memberships
+                .Where(x => x.IdGym.Equals(gymID) && x.Status.Equals(true))
+                .Select(x => new DashboardPieResponseDto
+                {
+                    Label = x.MembershipName,
+                    Value = _context.AthleteMemberships
+                        .Where(am => am.IdMembership.Equals(x.MembershipId) && am.EndDate >= DateOnly.FromDateTime(DateTime.Now))
+                        .Count()
+                }).ToListAsync();
+
+            // calculate the percentage of athletes by membership
+            foreach (var membership in memberships)
+            {
+                membership.Value = (membership.Value / totalAthletes) * 100;
+            }
+
+            return memberships;
+        }
+
         public async Task<bool> UpdateMembership(Membership membership)
         {
             _context.Update(membership);

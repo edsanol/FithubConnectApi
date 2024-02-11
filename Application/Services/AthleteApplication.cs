@@ -65,6 +65,7 @@ namespace Application.Services
                     IdAthlete = athlete.Data.AthleteId,
                     IdCard = existCardAccess.CardId,
                     AccessDateTime = DateTime.Now,
+                    IdGym = athlete.Data.IdGym,
                 };
 
                 var resultAccess = await _unitOfWork.AccessLogRepository.RegisterAccessLog(access);

@@ -75,6 +75,64 @@ namespace Infrastructure.Persistences.Repositories
             return athlete!;
         }
 
+        public async Task<DashboardAthleteResponseDto> DashboardAthletes(int gymID)
+        {
+            var currentMonth = DateTime.Now.Month;
+            var currentYear = DateTime.Now.Year;
+
+            // get total athletes
+            var totalAthletes = await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID))
+                .CountAsync();
+
+            // get active athletes
+            var activeAthletes = await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships
+                .Any(am => am.EndDate >= DateOnly.FromDateTime(DateTime.Now)))
+                .CountAsync();
+
+            // get inactive athletes
+            var inactiveAthletes = await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships
+                               .All(am => am.EndDate < DateOnly.FromDateTime(DateTime.Now)))
+                .CountAsync();
+
+            // get daily assistance
+            var dailyAssistance = await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID) && x.AccessLogs.Any(al => al.AccessDateTime.Date == DateTime.Now.Date))
+                .CountAsync();
+
+            // get new athletes by month
+            var newAthletesByMonth = await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID) && x.AuditCreateDate.HasValue && x.AuditCreateDate.Value.Month == currentMonth && x.AuditCreateDate.Value.Year == currentYear)
+                .CountAsync();
+
+            // get income by month
+            var incomeByMonth = await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships.Any(am => am.StartDate.Month == currentMonth && am.StartDate.Year == currentYear))
+                .SumAsync(x => x.AthleteMemberships
+                .Where(am => am.StartDate.Month == currentMonth && am.StartDate.Year == currentYear)
+                .Sum(am => am.IdMembershipNavigation.Cost));
+
+            // get active athletes percentage
+            var activeAthletesPercentage = (float)activeAthletes / totalAthletes * 100;
+
+            // get inactive athletes percentage
+            var inactiveAthletesPercentage = (float)inactiveAthletes / totalAthletes * 100;
+
+            return new DashboardAthleteResponseDto
+            {
+                TotalAthletes = totalAthletes,
+                ActiveAthletes = activeAthletes,
+                ActiveAthletesPercentage = activeAthletesPercentage,
+                InactiveAthletes = inactiveAthletes,
+                InactiveAthletesPercentage = inactiveAthletesPercentage,
+                DailyAssistance = dailyAssistance,
+                NewAthletesByMonth = newAthletesByMonth,
+                IncomeByMonth = incomeByMonth
+            };
+        }
+
         public async Task<bool> DeleteAthlete(int athleteID)
         {
             var athlete = await _context.Athlete.AsNoTracking().SingleOrDefaultAsync(x => x.AthleteId.Equals(athleteID));
@@ -92,6 +150,21 @@ namespace Infrastructure.Persistences.Repositories
             var recordsAffected = await _context.SaveChangesAsync();
 
             return recordsAffected > 0;
+        }
+
+        public async Task<IEnumerable<DashboardGraphicsResponseDto>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate)
+        {
+            var dailyAssistance = await _context.AccessLog
+                .Where(x => x.IdAthleteNavigation.IdGym.Equals(gymID) && DateOnly.FromDateTime(x.AccessDateTime) >= startDate && DateOnly.FromDateTime(x.AccessDateTime) <= endDate)
+                .GroupBy(x => x.AccessDateTime.Date)
+                .Select(x => new DashboardGraphicsResponseDto
+                {
+                    Time = DateOnly.FromDateTime(x.Key),
+                    Value = x.Count()
+                })
+                .ToListAsync();
+
+            return dailyAssistance;
         }
 
         public async Task<BaseEntityResponse<Athlete>> ListAthlete(BaseFiltersRequest filters, int gymID)

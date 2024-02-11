@@ -18,5 +18,6 @@
         public decimal? Cost { get; set; }
         public int? MembershipId { get; set; }
         public string? CardAccessCode { get; set; } = string.Empty;
+        public int IdGym { get; set; }
     }
 }

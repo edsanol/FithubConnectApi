@@ -11,7 +11,7 @@ namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     public class AthleteController : ControllerBase
     {
         private readonly IAthleteApplication _athleteApplication;

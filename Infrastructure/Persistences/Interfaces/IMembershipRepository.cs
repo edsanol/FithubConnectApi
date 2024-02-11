@@ -13,5 +13,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<bool> UpdateMembership(Membership membership);
         Task<bool> DeleteMembership(int membershipID);
         Task<int> GetAthletesByMembership(int membershipID);
+        Task<IEnumerable<DashboardPieResponseDto>> MembershipPercentage(int gymID);
     }
 }
