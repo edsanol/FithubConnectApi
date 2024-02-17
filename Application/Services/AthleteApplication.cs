@@ -220,10 +220,10 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> GetGluteusGraphic(int athleteID, DateOnly startDate, DateOnly endDate)
+        public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> GetMeasurementsGraphic(int athleteID, string muscle, DateOnly startDate, DateOnly endDate)
         {
             var response = new BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>();
-            var graphic = await _unitOfWork.MeasurementProgressRepository.GetGluteusGraphic(athleteID, startDate, endDate);
+            var graphic = await _unitOfWork.MeasurementProgressRepository.GetMeasurementsGraphic(athleteID, muscle, startDate, endDate);
 
             response.IsSuccess = true;
             response.Data = _mapper.Map<IEnumerable<DashboardGraphicsResponseDto>>(graphic);
@@ -576,6 +576,18 @@ namespace Application.Services
                     response.Data = 2;
                 }
             }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<IEnumerable<MeasurementsByLastMonthResponseDto>>> GetMeasurementsByLastMonth(int athleteID)
+        {
+            var response = new BaseResponse<IEnumerable<MeasurementsByLastMonthResponseDto>>();
+            var measurements = await _unitOfWork.MeasurementProgressRepository.GetMeasurementsByLastMonth(athleteID);
+
+            response.IsSuccess = true;
+            response.Data = _mapper.Map<IEnumerable<MeasurementsByLastMonthResponseDto>>(measurements);
+            response.Message = ReplyMessage.MESSAGE_QUERY;
 
             return response;
         }

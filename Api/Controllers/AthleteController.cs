@@ -143,10 +143,19 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("GetGluteusGraphic")]
-        public async Task<ActionResult<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>>> GetGluteusGraphic(int athleteID, [FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
+        [HttpGet("GetMeasurementsGraphic")]
+        public async Task<ActionResult<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>>>
+            GetMeasurementsGraphic(int athleteID, [FromQuery] string muscle, [FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
         {
-            var response = await _athleteApplication.GetGluteusGraphic(athleteID, startDate, endDate);
+            var response = await _athleteApplication.GetMeasurementsGraphic(athleteID, muscle, startDate, endDate);
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetMeasurementsByLastMonth")]
+        public async Task<ActionResult<BaseResponse<IEnumerable<MeasurementsByLastMonthResponseDto>>>> GetMeasurementsByLastMonth(int athleteID)
+        {
+            var response = await _athleteApplication.GetMeasurementsByLastMonth(athleteID);
 
             return Ok(response);
         }

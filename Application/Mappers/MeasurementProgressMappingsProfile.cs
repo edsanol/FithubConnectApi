@@ -21,6 +21,9 @@ namespace Application.Mappers
 
             CreateMap<DashboardGraphicsResponse, DashboardGraphicsResponseDto>()
                 .ReverseMap();
+
+            CreateMap<MeasurementsByLastMonthResponse, MeasurementsByLastMonthResponseDto>()
+                .ReverseMap();
         }
     }
 }
