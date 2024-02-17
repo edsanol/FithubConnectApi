@@ -17,8 +17,6 @@ public partial class MeasurementsProgress
 
     public decimal? Waist { get; set; }
 
-    public decimal? Hips { get; set; }
-
     public decimal? Thigh { get; set; }
 
     public decimal? Calf { get; set; }

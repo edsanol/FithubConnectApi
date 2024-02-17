@@ -21,6 +21,8 @@ namespace Infrastructure.Persistences.Repositories
 
         public IAccessLogRepository AccessLogRepository { get; private set; }
 
+        public IMeasurementProgressRepository MeasurementProgressRepository { get; private set;}
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -31,6 +33,7 @@ namespace Infrastructure.Persistences.Repositories
             AthleteMembershipRepository = new AthleteMembershipRepository(_context) ?? throw new ArgumentNullException(nameof(AthleteMembershipRepository));
             CardAccessRepository = new CardAccessRepository(_context) ?? throw new ArgumentNullException(nameof(CardAccessRepository));
             AccessLogRepository = new AccessLogRepository(_context) ?? throw new ArgumentNullException(nameof(AccessLogRepository));
+            MeasurementProgressRepository = new MeasurementProgressRepository(_context) ?? throw new ArgumentNullException(nameof(MeasurementProgressRepository));
         }
 
         public void Dispose()

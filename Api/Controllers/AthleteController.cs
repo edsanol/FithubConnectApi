@@ -11,7 +11,6 @@ namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class AthleteController : ControllerBase
     {
         private readonly IAthleteApplication _athleteApplication;
@@ -21,6 +20,7 @@ namespace Api.Controllers
             _athleteApplication = athleteApplication;
         }
 
+        [Authorize]
         [HttpPost("List")]
         public async Task<ActionResult<BaseResponse<BaseEntityResponse<AthleteResponseDto>>>> ListAthletes([FromBody] BaseFiltersRequest filters)
         {
@@ -29,6 +29,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("{athleteId:int}")]
         public async Task<ActionResult<BaseResponse<AthleteResponseDto>>> AthleteById(int athleteId)
         {
@@ -37,6 +38,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpPost("Register")]
         public async Task<ActionResult<BaseResponse<bool>>> RegisterAthlete([FromBody] AthleteRequestDto request)
         {
@@ -48,6 +50,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpPut("Edit/{athleteId:int}")]
         public async Task<ActionResult<BaseResponse<bool>>> EditAthlete(int athleteId, [FromBody] AthleteRequestDto request)
         {
@@ -59,6 +62,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpPut("Delete/{athleteId:int}")]
         public async Task<ActionResult<BaseResponse<bool>>> DeleteAthlete(int athleteId)
         {
@@ -78,6 +82,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpPost("UpdateMembershipToAthlete")]
         public async Task<ActionResult<BaseResponse<bool>>> UpdateMembershipToAthlete([FromBody] MembershipToAthleteRequestDto request)
         {
@@ -95,6 +100,35 @@ namespace Api.Controllers
             var response = await _athleteApplication.AccessAthlete(request);
 
             if (response == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpPost("VerifyLogin")]
+        public async Task<ActionResult<BaseResponse<int>>> VerifyAccessAthlete([FromBody] VerifyAccessRequestDto request)
+        {
+            var response = await _athleteApplication.VerifyAccessAthlete(request);
+            return Ok(response);
+        }
+
+        [HttpPost("CreatePassword")]
+        public async Task<ActionResult<BaseResponse<AthleteResponseDto>>> RegisterPassword([FromBody] LoginRequestDto loginRequestDto)
+        {
+            var response = await _athleteApplication.RegisterPassword(loginRequestDto);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpPost("RecordMeasurementProgress")]
+        public async Task<ActionResult<bool>> RecordMeasurementProgress([FromBody] MeasurementProgressRequestDto measurementProgressDto)
+        {
+            var response = await _athleteApplication.RecordMeasurementProgress(measurementProgressDto);
+
+            if (response.IsSuccess == false)
                 return BadRequest(response);
 
             return Ok(response);

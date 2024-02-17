@@ -3,6 +3,7 @@ using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Interfaces;
 using Application.Validators.Athlete;
+using Application.Validators.MeasurementProgress;
 using AutoMapper;
 using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
@@ -20,14 +21,16 @@ namespace Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly AthleteValidator _validationRules;
+        private readonly MeasurementProgressValidator _measurementValidationRules;
         private readonly DbFithubContext _context;
         private readonly IJwtHandler _jwtHandler;
 
-        public AthleteApplication(IUnitOfWork unitOfWork, IMapper mapper, AthleteValidator validationRules, DbFithubContext _context, IJwtHandler jwtHandler)
+        public AthleteApplication(IUnitOfWork unitOfWork, IMapper mapper, AthleteValidator validationRules, MeasurementProgressValidator measurementValidationRules, DbFithubContext _context, IJwtHandler jwtHandler)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _validationRules = validationRules;
+            _measurementValidationRules = measurementValidationRules;
             this._context = _context;
             _jwtHandler = jwtHandler;
         }
@@ -266,6 +269,38 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<BaseResponse<bool>> RecordMeasurementProgress(MeasurementProgressRequestDto measurementProgressDto)
+        {
+            var response = new BaseResponse<bool>();
+            var validationResults = await _measurementValidationRules.ValidateAsync(measurementProgressDto);
+
+            if (!validationResults.IsValid)
+            {
+                response.IsSuccess = false;
+                response.Errors = validationResults.Errors;
+                response.Message = ReplyMessage.MESSAGE_VALIDATE;
+                return response;
+            }
+
+            var measurementProgress = _mapper.Map<MeasurementsProgress>(measurementProgressDto);
+            measurementProgress.Date = DateOnly.FromDateTime(DateTime.Now);
+
+            response.Data = await _unitOfWork.MeasurementProgressRepository.RecordMeasurementProgress(measurementProgress);
+
+            if (response.Data)
+            {
+                response.IsSuccess = true;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_FAILED;
+            }
+
+            return response;
+        }
+
         public async Task<BaseResponse<bool>> RegisterAthlete(AthleteRequestDto athleteDto)
         {
             var response = new BaseResponse<bool>();
@@ -340,6 +375,50 @@ namespace Application.Services
 
                 response.IsSuccess = true;
                 response.Data = result;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+                response.IsSuccess = false;
+                transaction?.Rollback();
+            }
+            finally
+            {
+                transaction?.Dispose();
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<AthleteResponseDto>> RegisterPassword(LoginRequestDto loginRequestDto)
+        {
+            var response = new BaseResponse<AthleteResponseDto>();
+            IDbContextTransaction? transaction = null;
+
+            try
+            {
+                var athlete = await _unitOfWork.AthleteRepository.LoginAthlete(loginRequestDto.Email) ?? throw new Exception("El atleta no existe");
+
+                if (athlete.Password != null && athlete.Password != "")
+                {
+                    throw new Exception("El atleta ya cuenta con una contraseña");
+                }
+
+                transaction = _context.Database.BeginTransaction();
+
+                var password = BC.HashPassword(loginRequestDto.Password);
+                var result = await _unitOfWork.AthleteRepository.RegisterPassword(athlete.AthleteId, password);
+
+                if (!result)
+                {
+                    throw new Exception("Error al registrar la contraseña");
+                }
+
+                transaction.Commit();
+
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<AthleteResponseDto>(athlete);
                 response.Message = ReplyMessage.MESSAGE_SAVE;
             }
             catch (Exception ex)
@@ -434,6 +513,36 @@ namespace Application.Services
             finally
             {
                 transaction?.Dispose();
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<int>> VerifyAccessAthlete(VerifyAccessRequestDto verifyAccessDto)
+        {
+            var response = new BaseResponse<int>();
+            var athlete = await _unitOfWork.AthleteRepository.LoginAthlete(verifyAccessDto.Email);
+
+            if (athlete is null)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                response.Data = 0;
+            }
+            else
+            {
+                if (athlete.Password != null && athlete.Password != "")
+                {
+                    response.IsSuccess = true;
+                    response.Message = ReplyMessage.MESSAGE_QUERY;
+                    response.Data = 1;
+                }
+                else
+                {
+                    response.IsSuccess = true;
+                    response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                    response.Data = 2;
+                }
             }
 
             return response;

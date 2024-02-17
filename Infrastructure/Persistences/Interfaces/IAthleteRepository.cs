@@ -14,5 +14,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<Athlete> LoginAthlete(string email);
         Task<DashboardAthleteResponseDto> DashboardAthletes(int gymID);
         Task<IEnumerable<DashboardGraphicsResponseDto>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate);
+        Task<bool> RegisterPassword(int athleteID, string password);
     }
 }

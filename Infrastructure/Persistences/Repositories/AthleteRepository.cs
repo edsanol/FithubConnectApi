@@ -268,5 +268,15 @@ namespace Infrastructure.Persistences.Repositories
             return recordsAffected > 0;
             
         }
+
+        public async Task<bool> RegisterPassword(int athleteID, string password)
+        {
+            var athlete = await _context.Athlete.AsNoTracking().SingleOrDefaultAsync(x => x.AthleteId.Equals(athleteID));
+            athlete.Password = password;
+            _context.Update(athlete);
+            var recordsAffected = await _context.SaveChangesAsync();
+
+            return recordsAffected > 0;
+        }
     }
 }

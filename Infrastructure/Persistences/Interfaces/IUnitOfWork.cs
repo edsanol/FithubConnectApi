@@ -11,6 +11,7 @@
         IAthleteMembershipRepository AthleteMembershipRepository { get; }
         ICardAccessRepository CardAccessRepository { get; }
         IAccessLogRepository AccessLogRepository { get;  }
+        IMeasurementProgressRepository MeasurementProgressRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();
