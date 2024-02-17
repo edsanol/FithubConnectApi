@@ -152,12 +152,12 @@ namespace Infrastructure.Persistences.Repositories
             return recordsAffected > 0;
         }
 
-        public async Task<IEnumerable<DashboardGraphicsResponseDto>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate)
+        public async Task<IEnumerable<DashboardGraphicsResponse>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate)
         {
             var dailyAssistance = await _context.AccessLog
                 .Where(x => x.IdAthleteNavigation.IdGym.Equals(gymID) && DateOnly.FromDateTime(x.AccessDateTime) >= startDate && DateOnly.FromDateTime(x.AccessDateTime) <= endDate)
                 .GroupBy(x => x.AccessDateTime.Date)
-                .Select(x => new DashboardGraphicsResponseDto
+                .Select(x => new DashboardGraphicsResponse
                 {
                     Time = DateOnly.FromDateTime(x.Key),
                     Value = x.Count()

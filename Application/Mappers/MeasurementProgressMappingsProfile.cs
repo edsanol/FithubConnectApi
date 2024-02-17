@@ -18,6 +18,9 @@ namespace Application.Mappers
 
             CreateMap<BaseEntityResponse<MeasurementsProgress>, BaseEntityResponse<MeasurementProgressResponseDto>>()
                 .ReverseMap();
+
+            CreateMap<DashboardGraphicsResponse, DashboardGraphicsResponseDto>()
+                .ReverseMap();
         }
     }
 }

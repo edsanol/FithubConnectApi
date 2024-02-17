@@ -16,6 +16,18 @@ namespace Infrastructure.Persistences.Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
+        public async Task<IEnumerable<DashboardGraphicsResponse>> GetGluteusGraphic(int athleteID, DateOnly startDate, DateOnly endDate)
+        {
+            var query = _context.MeasurementsProgress.Where(x => x.IdAthlete == athleteID && x.Date >= startDate && x.Date <= endDate)
+                .AsNoTracking().AsQueryable();
+
+            return await query.Select(x => new DashboardGraphicsResponse
+            {
+                Time = (DateOnly)x.Date,
+                Value = (float)x.Gluteus
+            }).ToListAsync();
+        }
+
         public async Task<BaseEntityResponse<MeasurementsProgress>> GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID)
         {
             var response = new BaseEntityResponse<MeasurementsProgress>();

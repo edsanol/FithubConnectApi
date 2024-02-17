@@ -8,5 +8,6 @@ namespace Infrastructure.Persistences.Interfaces
     {
         Task<bool> RecordMeasurementProgress(MeasurementsProgress measurementProgress);
         Task<BaseEntityResponse<MeasurementsProgress>> GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID);
+        Task<IEnumerable<DashboardGraphicsResponse>> GetGluteusGraphic(int athleteID, DateOnly startDate, DateOnly endDate);
     }
 }

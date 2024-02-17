@@ -23,12 +23,12 @@ namespace Infrastructure.Persistences.Repositories
             return recordsAffected > 0;
         }
 
-        public async Task<IEnumerable<DashboardGraphicsResponseDto>> GetIncome(int gymID, DateOnly startDate, DateOnly endDate)
+        public async Task<IEnumerable<DashboardGraphicsResponse>> GetIncome(int gymID, DateOnly startDate, DateOnly endDate)
         {
             var income = await _context.AthleteMemberships
                 .Where(x => x.IdAthleteNavigation.IdGym.Equals(gymID) && x.StartDate >= startDate && x.StartDate <= endDate)
                 .GroupBy(x => x.StartDate)
-                .Select(x => new DashboardGraphicsResponseDto
+                .Select(x => new DashboardGraphicsResponse
                 {
                     Time = x.Key,
                     Value = (float)x.Sum(am => am.IdMembershipNavigation.Cost)

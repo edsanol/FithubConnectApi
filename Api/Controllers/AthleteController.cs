@@ -142,5 +142,13 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpGet("GetGluteusGraphic")]
+        public async Task<ActionResult<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>>> GetGluteusGraphic(int athleteID, [FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
+        {
+            var response = await _athleteApplication.GetGluteusGraphic(athleteID, startDate, endDate);
+
+            return Ok(response);
+        }
     }
 }

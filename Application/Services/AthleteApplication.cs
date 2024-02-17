@@ -220,6 +220,18 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> GetGluteusGraphic(int athleteID, DateOnly startDate, DateOnly endDate)
+        {
+            var response = new BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>();
+            var graphic = await _unitOfWork.MeasurementProgressRepository.GetGluteusGraphic(athleteID, startDate, endDate);
+
+            response.IsSuccess = true;
+            response.Data = _mapper.Map<IEnumerable<DashboardGraphicsResponseDto>>(graphic);
+            response.Message = ReplyMessage.MESSAGE_QUERY;
+
+            return response;
+        }
+
         public async Task<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>> GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID)
         {
             var response = new BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>();

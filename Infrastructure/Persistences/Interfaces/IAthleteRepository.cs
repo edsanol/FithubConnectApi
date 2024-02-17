@@ -13,7 +13,7 @@ namespace Infrastructure.Persistences.Interfaces
         Task<bool> DeleteAthlete(int athleteID);
         Task<Athlete> LoginAthlete(string email);
         Task<DashboardAthleteResponseDto> DashboardAthletes(int gymID);
-        Task<IEnumerable<DashboardGraphicsResponseDto>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate);
+        Task<IEnumerable<DashboardGraphicsResponse>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate);
         Task<bool> RegisterPassword(int athleteID, string password);
     }
 }

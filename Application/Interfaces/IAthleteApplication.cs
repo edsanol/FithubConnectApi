@@ -21,5 +21,6 @@ namespace Application.Interfaces
         Task<BaseResponse<AthleteResponseDto>> RegisterPassword(LoginRequestDto loginRequestDto);
         Task<BaseResponse<bool>> RecordMeasurementProgress(MeasurementProgressRequestDto measurementProgressDto);
         Task<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>> GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID);
+        Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> GetGluteusGraphic(int athleteID, DateOnly startDate, DateOnly endDate);
     }
 }
