@@ -20,5 +20,6 @@ namespace Application.Interfaces
         Task<BaseResponse<int>> VerifyAccessAthlete(VerifyAccessRequestDto verifyAccessDto);
         Task<BaseResponse<AthleteResponseDto>> RegisterPassword(LoginRequestDto loginRequestDto);
         Task<BaseResponse<bool>> RecordMeasurementProgress(MeasurementProgressRequestDto measurementProgressDto);
+        Task<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>> GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID);
     }
 }

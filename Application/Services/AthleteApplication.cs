@@ -220,6 +220,26 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>> GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID)
+        {
+            var response = new BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>();
+            var measurementProgress = await _unitOfWork.MeasurementProgressRepository.GetMeasurementProgressList(filters, athleteID);
+
+            if (measurementProgress is not null)
+            {
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<BaseEntityResponse<MeasurementProgressResponseDto>>(measurementProgress);
+                response.Message = ReplyMessage.MESSAGE_QUERY;
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+            }
+
+            return response;
+        }
+
         public async Task<BaseResponse<BaseEntityResponse<AthleteResponseDto>>> ListAthletes(BaseFiltersRequest filters)
         {
             var gymID = _jwtHandler.ExtractGymIdFromToken();

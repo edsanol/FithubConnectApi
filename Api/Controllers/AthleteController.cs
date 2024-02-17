@@ -133,5 +133,14 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("GetMeasurementProgressList")]
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>>> 
+            GetMeasurementProgressList([FromBody] BaseFiltersRequest filters, int athleteID)
+        {
+            var response = await _athleteApplication.GetMeasurementProgressList(filters, athleteID);
+
+            return Ok(response);
+        }
     }
 }

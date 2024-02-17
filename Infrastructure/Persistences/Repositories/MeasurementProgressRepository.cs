@@ -1,6 +1,9 @@
 ﻿using Domain.Entities;
+using Infrastructure.Commons.Bases.Request;
+using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistences.Repositories
 {
@@ -11,6 +14,25 @@ namespace Infrastructure.Persistences.Repositories
         public MeasurementProgressRepository(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+        }
+
+        public async Task<BaseEntityResponse<MeasurementsProgress>> GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID)
+        {
+            var response = new BaseEntityResponse<MeasurementsProgress>();
+            var query = _context.MeasurementsProgress.Where(x => x.IdAthlete == athleteID)
+                .AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrEmpty(filters.StartDate))
+            {
+                query = query.Where(x => x.Date == DateOnly.FromDateTime(Convert.ToDateTime(filters.StartDate)));
+            }
+
+            filters.Sort ??= "Date";
+
+            response.TotalRecords = await query.CountAsync();
+            response.Items = await Ordering(filters, query, !(bool)filters.Download!).ToListAsync();
+
+            return response;
         }
 
         public async Task<bool> RecordMeasurementProgress(MeasurementsProgress measurementProgress)
