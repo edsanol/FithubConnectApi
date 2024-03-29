@@ -31,6 +31,38 @@ namespace Application.Services
             _jwtHandler = jwtHandler;
         }
 
+        private async Task<bool> RefreshTokenLogic(int gymID, string refreshToken)
+        {
+            var actualRefreshToken = await _unitOfWork.GymTokenRepository.GetGymToken(gymID);
+            if (actualRefreshToken is not null && actualRefreshToken.Length > 0)
+            {
+                var revokeTokenStatus = await _unitOfWork.GymTokenRepository.RevokeGymToken(actualRefreshToken);
+
+                if (!revokeTokenStatus)
+                {
+                    return false;
+                }
+            }
+
+            var newRefreshToken = new GymToken
+            {
+                TokenID = 0,
+                IdGym = gymID,
+                Token = refreshToken,
+                Expires = DateOnly.FromDateTime(DateTime.Now.AddMinutes(21600)),
+                Revoked = false,
+            };
+
+            bool result = await _unitOfWork.GymTokenRepository.RegisterGymToken(newRefreshToken);
+
+            if (!result)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public async Task<BaseResponse<BaseEntityResponse<GymResponseDto>>> ListGyms(BaseFiltersRequest filters)
         {
             var response = new BaseResponse<BaseEntityResponse<GymResponseDto>>();
@@ -74,7 +106,26 @@ namespace Application.Services
         public async Task<BaseResponse<GymResponseDto>> GymById(int gymID)
         {
             var response = new BaseResponse<GymResponseDto>();
-            var gym = await _unitOfWork.GymRepository.GetGymById(gymID);
+            string role = _jwtHandler.GetRoleFromToken();
+            int gymIdQuery;
+
+            if (role == "gimnasio")
+            {
+                var userID = _jwtHandler.ExtractIdFromToken();
+                gymIdQuery = userID;
+            }
+            else if (role == "deportista" && gymID > 0)
+            {
+                gymIdQuery = gymID;
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gym = await _unitOfWork.GymRepository.GetGymById(gymIdQuery);
 
             if (gym is not null)
             {
@@ -135,9 +186,19 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<bool>> EditGym(int gymID, GymRequestDto gymDto)
+        public async Task<BaseResponse<bool>> EditGym(GymRequestDto gymDto)
         {
             var response = new BaseResponse<bool>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
             var gymEdit = await _unitOfWork.GymRepository.GetGymById(gymID);
 
             if (gymEdit is null)
@@ -165,10 +226,20 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<bool>> RemoveGym(int gymID)
+        public async Task<BaseResponse<bool>> RemoveGym()
         {
             var response = new BaseResponse<bool>();
-            var gym = await GymById(gymID);
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
+            var gym = await GymByIdRemove(gymID);
 
             if (gym.Data is null)
             {
@@ -206,6 +277,15 @@ namespace Application.Services
                     response.Data.Token = await _jwtHandler.GenerateToken(gym);
                     response.Data.RefreshToken = await _jwtHandler.GenerateRefreshToken(gym);
                     response.Message = ReplyMessage.MESSAGE_LOGIN;
+
+                    bool result = await RefreshTokenLogic(gym.GymId, response.Data.RefreshToken);
+
+                    if (!result)
+                    {
+                        response.IsSuccess = false;
+                        response.Message = ReplyMessage.MESSAGE_FAILED;
+                        response.Data = null;
+                    }
                 }
                 else
                 {
@@ -274,7 +354,7 @@ namespace Application.Services
                 return response;
             }
 
-            var gymId = _jwtHandler.ExtractGymIdFromToken();
+            var gymId = _jwtHandler.ExtractIdFromToken();
 
             if (gymId == 0)
             {
@@ -344,8 +424,19 @@ namespace Application.Services
         public async Task<BaseResponse<GymResponseDto>> RefreshAuthToken(string refreshToken)
         {
             var response = new BaseResponse<GymResponseDto>();
-            string email = _jwtHandler.GetEmailFromRefreshToken(refreshToken);
-            var gym = await _unitOfWork.GymRepository.LoginGym(email);
+            string role = _jwtHandler.GetRoleFromRefreshToken(refreshToken);
+            string tokenType = _jwtHandler.GetTokenTypeFromRefreshToken(refreshToken);
+            bool refreshTokenValid = await _unitOfWork.GymTokenRepository.GetRevokeStatus(refreshToken);
+
+            if (role != "gimnasio" || tokenType != "refresh" || refreshTokenValid == true)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                return response;
+            }
+
+            var gymId = _jwtHandler.GetIdFromRefreshToken(refreshToken);
+            var gym = await _unitOfWork.GymRepository.GetGymById(gymId);
 
             if (gym is not null)
             {
@@ -354,11 +445,40 @@ namespace Application.Services
                 response.Data.Token = await _jwtHandler.GenerateToken(gym);
                 response.Data.RefreshToken = await _jwtHandler.GenerateRefreshToken(gym);
                 response.Message = ReplyMessage.MESSAGE_LOGIN;
+
+                bool result = await RefreshTokenLogic(gym.GymId, response.Data.RefreshToken);
+
+                if (!result)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_FAILED;
+                    response.Data = null;
+                }
             }
             else
             {
                 response.IsSuccess = false;
                 response.Message = ReplyMessage.MESSAGE_LOGIN_FAILED;
+            }
+
+            return response;
+        }
+
+        private async Task<BaseResponse<GymResponseDto>> GymByIdRemove(int gymID)
+        {
+            var response = new BaseResponse<GymResponseDto>();
+            var gym = await _unitOfWork.GymRepository.GetGymById(gymID);
+
+            if (gym is not null)
+            {
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<GymResponseDto>(gym);
+                response.Message = ReplyMessage.MESSAGE_QUERY;
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
             }
 
             return response;

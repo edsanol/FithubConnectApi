@@ -115,10 +115,18 @@ namespace Infrastructure.Persistences.Repositories
                 .Sum(am => am.IdMembershipNavigation.Cost));
 
             // get active athletes percentage
-            var activeAthletesPercentage = (float)activeAthletes / totalAthletes * 100;
+            float activeAthletesPercentage = (float)activeAthletes / totalAthletes * 100;
+            if (float.IsNaN(activeAthletesPercentage))
+            {
+                activeAthletesPercentage = 0.0f;
+            }
 
             // get inactive athletes percentage
-            var inactiveAthletesPercentage = (float)inactiveAthletes / totalAthletes * 100;
+            float inactiveAthletesPercentage = (float)inactiveAthletes / totalAthletes * 100;
+            if (float.IsNaN(inactiveAthletesPercentage))
+            {
+                inactiveAthletesPercentage = 0.0f;
+            }
 
             return new DashboardAthleteResponseDto
             {
@@ -266,7 +274,7 @@ namespace Infrastructure.Persistences.Repositories
             var recordsAffected = await _context.SaveChangesAsync();
 
             return recordsAffected > 0;
-            
+
         }
 
         public async Task<bool> RegisterPassword(int athleteID, string password)

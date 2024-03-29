@@ -5,6 +5,7 @@ using Application.Dtos.Response;
 using Application.Interfaces;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
@@ -20,6 +21,7 @@ namespace Api.Controllers
             _gymApplication = gymApplication;
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<BaseResponse<BaseEntityResponse<GymResponseDto>>>> ListGyms([FromBody] BaseFiltersRequest filters)
         {
@@ -28,6 +30,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("Select")]
         public async Task<ActionResult<BaseResponse<IEnumerable<GymSelectResponseDto>>>> ListGymsSelect()
         {
@@ -36,10 +39,11 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("{gymId:int}")]
-        public async Task<ActionResult<BaseResponse<GymResponseDto>>> GymById(int gymId)
+        [Authorize]
+        [HttpGet("GymById")]
+        public async Task<ActionResult<BaseResponse<GymResponseDto>>> GymById([FromQuery] int gymID = 0)
         {
-            var response = await _gymApplication.GymById(gymId);
+            var response = await _gymApplication.GymById(gymID);
 
             return Ok(response);
         }
@@ -55,18 +59,20 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpPut("Edit/{gymId:int}")]
-        public async Task<ActionResult<BaseResponse<bool>>> EditGym(int gymId, [FromBody] GymRequestDto request)
+        [Authorize]
+        [HttpPut("Edit")]
+        public async Task<ActionResult<BaseResponse<bool>>> EditGym([FromBody] GymRequestDto request)
         {
-            var response = await _gymApplication.EditGym(gymId, request);
+            var response = await _gymApplication.EditGym(request);
 
             return Ok(response);
         }
 
-        [HttpPut("Delete/{gymId:int}")]
-        public async Task<ActionResult<BaseResponse<bool>>> RemoveGym(int gymId)
+        [Authorize]
+        [HttpPut("Delete")]
+        public async Task<ActionResult<BaseResponse<bool>>> RemoveGym()
         {
-            var response = await _gymApplication.RemoveGym(gymId);
+            var response = await _gymApplication.RemoveGym();
 
             return Ok(response);
         }
@@ -118,7 +124,7 @@ namespace Api.Controllers
         [HttpPost]
         [ValidateRefreshToken]
         [Route("refreshToken")]
-        public async Task<ActionResult<GymResponseDto>> RefreshAuthToken([FromHeader(Name = "RefreshToken")] string refreshToken)
+        public async Task<ActionResult<BaseResponse<GymResponseDto>>> RefreshAuthToken([FromHeader(Name = "RefreshToken")] string refreshToken)
         {
             var response = await _gymApplication.RefreshAuthToken(refreshToken);
 

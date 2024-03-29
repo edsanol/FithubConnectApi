@@ -37,7 +37,12 @@ namespace Application.Mappers
             CreateMap<BaseEntityResponse<Athlete>, BaseEntityResponse<AthleteResponseDto>>()
                 .ReverseMap();
 
+            CreateMap<Athlete, AthleteEditResponseDto>()
+                .ReverseMap();
+
             CreateMap<AthleteRequestDto, Athlete>();
+
+            CreateMap<AthleteEditRequestDto, Athlete>();
         }
     }
 }

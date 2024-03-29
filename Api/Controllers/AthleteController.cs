@@ -1,4 +1,5 @@
-﻿using Application.Commons.Bases;
+﻿using Api.Attributes;
+using Application.Commons.Bases;
 using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Interfaces;
@@ -35,6 +36,12 @@ namespace Api.Controllers
         {
             var response = await _athleteApplication.AthleteById(athleteId);
 
+            if (response.IsSuccess == false && response.Message == "No autorizado")
+                return Unauthorized(response);
+
+            if (response.IsSuccess == false && response.Message == "No se encontraron registros")
+                return NotFound(response);
+
             return Ok(response);
         }
 
@@ -56,6 +63,21 @@ namespace Api.Controllers
         {
             var response = await _athleteApplication.EditAthlete(athleteId, request);
 
+            if (response.IsSuccess == false && response.Message == "No autorizado")
+                return Unauthorized(response);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPut("EditMobile")]
+        public async Task<ActionResult<BaseResponse<AthleteEditResponseDto>>> EditAthleteMobile([FromBody] AthleteEditRequestDto request)
+        {
+            var response = await _athleteApplication.EditAthleteMobile(request);
+
             if (response.IsSuccess == false)
                 return BadRequest(response);
 
@@ -67,6 +89,12 @@ namespace Api.Controllers
         public async Task<ActionResult<BaseResponse<bool>>> DeleteAthlete(int athleteId)
         {
             var response = await _athleteApplication.RemoveAthlete(athleteId);
+
+            if (response.IsSuccess == false && response.Message == "No autorizado")
+                return Unauthorized(response);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
 
             return Ok(response);
         }
@@ -87,6 +115,9 @@ namespace Api.Controllers
         public async Task<ActionResult<BaseResponse<bool>>> UpdateMembershipToAthlete([FromBody] MembershipToAthleteRequestDto request)
         {
             var response = await _athleteApplication.UpdateMembershipToAthlete(request);
+
+            if (response.IsSuccess == false && response.Message == "No autorizado")
+                return Unauthorized(response);
 
             if (response.IsSuccess == false)
                 return BadRequest(response);
@@ -123,10 +154,30 @@ namespace Api.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpPost("RecordMeasurementProgress")]
         public async Task<ActionResult<bool>> RecordMeasurementProgress([FromBody] MeasurementProgressRequestDto measurementProgressDto)
         {
             var response = await _athleteApplication.RecordMeasurementProgress(measurementProgressDto);
+
+            if (response.IsSuccess == false && response.Message == "No autorizado")
+                return Unauthorized(response);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+        
+        [Authorize]
+        [HttpPost("GetMeasurementProgressList")]
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>>> 
+            GetMeasurementProgressList([FromBody] BaseFiltersRequest filters, int athleteID = 0)
+        {
+            var response = await _athleteApplication.GetMeasurementProgressList(filters, athleteID);
+
+            if (response.IsSuccess == false && response.Message == "No autorizado")
+                return Unauthorized(response);
 
             if (response.IsSuccess == false)
                 return BadRequest(response);
@@ -134,28 +185,55 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpPost("GetMeasurementProgressList")]
-        public async Task<ActionResult<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>>> 
-            GetMeasurementProgressList([FromBody] BaseFiltersRequest filters, int athleteID)
-        {
-            var response = await _athleteApplication.GetMeasurementProgressList(filters, athleteID);
-
-            return Ok(response);
-        }
-
+        [Authorize]
         [HttpGet("GetMeasurementsGraphic")]
         public async Task<ActionResult<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>>>
-            GetMeasurementsGraphic(int athleteID, [FromQuery] string muscle, [FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
+            GetMeasurementsGraphic([FromQuery] string muscle, [FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate, [FromQuery] int athleteID = 0)
         {
-            var response = await _athleteApplication.GetMeasurementsGraphic(athleteID, muscle, startDate, endDate);
+            var response = await _athleteApplication.GetMeasurementsGraphic(muscle, startDate, endDate, athleteID);
+
+            if (response.IsSuccess == false && response.Message == "No autorizado")
+                return Unauthorized(response);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
 
             return Ok(response);
         }
 
+        [Authorize]
         [HttpGet("GetMeasurementsByLastMonth")]
-        public async Task<ActionResult<BaseResponse<IEnumerable<MeasurementsByLastMonthResponseDto>>>> GetMeasurementsByLastMonth(int athleteID)
+        public async Task<ActionResult<BaseResponse<IEnumerable<MeasurementsByLastMonthResponseDto>>>> GetMeasurementsByLastMonth([FromQuery] int athleteID = 0)
         {
             var response = await _athleteApplication.GetMeasurementsByLastMonth(athleteID);
+
+            if (response.IsSuccess == false && response.Message == "No autorizado")
+                return Unauthorized(response);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpPost]
+        [ValidateRefreshToken]
+        [Route("refreshToken")]
+        public async Task<ActionResult<BaseResponse<AthleteResponseDto>>> RefreshAuthToken([FromHeader(Name = "RefreshToken")] string refreshToken)
+        {
+            var response = await _athleteApplication.RefreshAuthToken(refreshToken);
+
+            if (response.IsSuccess == false)
+                return Unauthorized();
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpGet("GetContactInformation")]
+        public async Task<ActionResult<BaseResponse<ContactInformationResponseDto>>> GetContactInformation()
+        {
+            var response = await _athleteApplication.GetContactInformation();
 
             return Ok(response);
         }

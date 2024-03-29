@@ -2,7 +2,7 @@
 {
     public class MeasurementProgressRequestDto
     {
-        public int IdAthlete { get; set; }
+        public int? IdAthlete { get; set; } = 0;
         public float Gluteus { get; set; }
         public float Biceps { get; set; }
         public float Chest { get; set; }

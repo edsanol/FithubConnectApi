@@ -31,18 +31,6 @@ namespace Application.Validators.Athlete
             RuleFor(x => x.Genre)
                 .NotNull().WithMessage("El campo género no puede ser nulo")
                 .NotEmpty().WithMessage("El campo género no puede ser vacio");
-
-            RuleFor(x => x.IdGym)
-                .NotNull().WithMessage("El campo id gimnasio no puede ser nulo")
-                .NotEmpty().WithMessage("El campo id gimnasio no puede ser vacio");
-
-            RuleFor(x => x.GymName)
-                .NotNull().WithMessage("El campo nombre gimnasio no puede ser nulo")
-                .NotEmpty().WithMessage("El campo nombre gimnasio no puede ser vacio");
-
-            RuleFor(x => x.RegisterDate)
-                .NotNull().WithMessage("El campo fecha de registro no puede ser nulo")
-                .NotEmpty().WithMessage("El campo fecha de registro no puede ser vacio");
         }
     }
 }

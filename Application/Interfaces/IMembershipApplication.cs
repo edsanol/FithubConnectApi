@@ -9,7 +9,7 @@ namespace Application.Interfaces
     public interface IMembershipApplication
     {
         Task<BaseResponse<BaseEntityResponse<MembershipResponseDto>>> ListMemberships(BaseFiltersRequest filters);
-        Task<BaseResponse<IEnumerable<MembershipSelectResponseDto>>> ListMembershipsSelect(int gymID);
+        Task<BaseResponse<IEnumerable<MembershipSelectResponseDto>>> ListMembershipsSelect();
         Task<BaseResponse<MembershipResponseDto>> MembershipById(int membershipID);
         Task<BaseResponse<bool>> CreateMembership(MembershipRequestDto membership);
         Task<BaseResponse<bool>> UpdateMembership(int membershipID, MembershipRequestDto membership);

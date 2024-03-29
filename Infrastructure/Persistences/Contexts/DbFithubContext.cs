@@ -42,6 +42,12 @@ public partial class DbFithubContext : DbContext
 
     public virtual DbSet<Membership> Memberships { get; set; }
 
+    public virtual DbSet<ContactInformation> ContactInformation { get; set; }
+
+    public virtual DbSet<AthleteToken> AthleteToken { get; set; }
+
+    public virtual DbSet<GymToken> GymToken { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasAnnotation("Relational:Collation", "Modern_Spanish_CI_AS");

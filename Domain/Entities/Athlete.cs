@@ -45,4 +45,6 @@ public partial class Athlete
     public virtual ICollection<CardAccess> CardAccesses { get; set; } = new List<CardAccess>();
 
     public virtual ICollection<MeasurementsProgress> MeasurementsProgresses { get; set; } = new List<MeasurementsProgress>();
+
+    public virtual ICollection<AthleteToken> AthleteToken { get; set; } = new List<AthleteToken>();
 }

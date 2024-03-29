@@ -12,8 +12,8 @@ namespace Application.Interfaces
         Task<BaseResponse<IEnumerable<GymSelectResponseDto>>> ListGymsSelect();
         Task<BaseResponse<GymResponseDto>> GymById(int gymID);
         Task<BaseResponse<bool>> RegisterGym(GymRequestDto gymDto);
-        Task<BaseResponse<bool>> EditGym(int gymID, GymRequestDto gymDto);
-        Task<BaseResponse<bool>> RemoveGym(int gymID);
+        Task<BaseResponse<bool>> EditGym(GymRequestDto gymDto);
+        Task<BaseResponse<bool>> RemoveGym();
         Task<BaseResponse<GymResponseDto>> LoginGym(LoginRequestDto loginDto);
         Task<BaseResponse<GymResponseDto>> RefreshAuthToken(string refreshToken);
         Task<BaseResponse<bool>> RecoverPassword(RecoverPasswordRequestDto request);

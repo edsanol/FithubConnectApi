@@ -1,6 +1,6 @@
 ﻿namespace Application.Dtos.Request
 {
-    public class AthleteRequestDto
+    public class AthleteEditRequestDto
     {
         public string AthleteName { get; set; } = string.Empty;
         public string AthleteLastName { get; set; } = string.Empty;
@@ -8,9 +8,5 @@
         public string? PhoneNumber { get; set; }
         public DateTime BirthDate { get; set; }
         public string Genre { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public bool? Status { get; set; } = true;
-        public int MembershipId { get; set; }
-        public string? CardAccessCode { get; set; } = string.Empty;
     }
 }

@@ -25,8 +25,35 @@ namespace Application.Services
             var claims = new Claim[]
             {
                 new Claim("field1", gym.GymId.ToString()),
-                new Claim("field2", gym.Email.ToString()),
-                new Claim("field3", Guid.NewGuid().ToString()),
+                new Claim("field2", "gimnasio"),
+                new Claim("field3", "auth"),
+                new Claim("field4", Guid.NewGuid().ToString()),
+            };
+
+            string stringToken = await GenerateTokenFunc(claims, 60);
+            return stringToken;
+        }
+
+        public async Task<string> GenerateRefreshToken(Gym gym)
+        {
+            var claims = new Claim[]
+            {
+                new Claim("field1", gym.GymId.ToString()),
+                new Claim("field2", "gimnasio"),
+                new Claim("field3", "refresh"),
+            };
+
+            string stringToken = await GenerateTokenFunc(claims, 21600);
+            return stringToken;
+        }
+
+        public async Task<string> GenerateAthleteToken(Athlete athlete)
+        {
+            var claims = new Claim[]
+            {
+                new Claim("field1", athlete.AthleteId.ToString()),
+                new Claim("field2", "deportista"),
+                new Claim("field3", "auth"),
                 new Claim("field4", Guid.NewGuid().ToString()),
             };
 
@@ -35,16 +62,16 @@ namespace Application.Services
             return stringToken;
         }
 
-        public async Task<string> GenerateRefreshToken(Gym gym)
+        public async Task<string> GenerateAthleteRefreshToken(Athlete athlete)
         {
             var claims = new Claim[]
             {
-                new Claim("field1", gym.Email.ToString()),
-                new Claim("field2", Guid.NewGuid().ToString()),
-                new Claim("field3", Guid.NewGuid().ToString()),
+                new Claim("field1", athlete.AthleteId.ToString()),
+                new Claim("field2", "deportista"),
+                new Claim("field3", "refresh"),
             };
 
-            string stringToken = await GenerateTokenFunc(claims, 1440);
+            string stringToken = await GenerateTokenFunc(claims, 21600);
             await Task.Run(() => stringToken);
             return stringToken;
         }
@@ -104,7 +131,7 @@ namespace Application.Services
             }
         }
 
-        public int ExtractGymIdFromToken()
+        public int ExtractIdFromToken()
         {
             string? userId;
             var result = 0;
@@ -123,7 +150,46 @@ namespace Application.Services
             return result;
         }
 
-        public string GetEmailFromRefreshToken(string refreshToken)
+        public int GetIdFromRefreshToken(string refreshToken)
+        {
+            var userId = string.Empty;
+            var result = 0;
+            string jwtKey = _configuration["Jwt:Secret"]!;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out var validatedToken);
+                userId = ((JwtSecurityToken)validatedToken).Claims
+                    .FirstOrDefault(x => x.Type == "field1")?.Value;
+            }
+            catch (Exception)
+            {
+                result = 0;
+            }
+
+            userId ??= string.Empty;
+
+            if (userId != string.Empty)
+            {
+                result = int.Parse(userId);
+            }
+
+            return result;
+        }
+
+        public string GetRoleFromRefreshToken(string token)
         {
             var result = string.Empty;
             string jwtKey = _configuration["Jwt:Secret"]!;
@@ -142,9 +208,61 @@ namespace Application.Services
 
             try
             {
-                tokenHandler.ValidateToken(refreshToken, tokenValidationParameters, out var validatedToken);
+                tokenHandler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
                 result = ((JwtSecurityToken)validatedToken).Claims
-                    .FirstOrDefault(x => x.Type == "field1")?.Value;
+                    .FirstOrDefault(x => x.Type == "field2")?.Value;
+            }
+            catch (Exception)
+            {
+                result = string.Empty;
+            }
+
+            result ??= string.Empty;
+
+            return result;
+        }
+
+        public string GetRoleFromToken()
+        {
+            string? user;
+            var result = string.Empty;
+            if (httpContextAccessor != null)
+            {
+                user = httpContextAccessor.HttpContext!.User?.Claims?
+                            .FirstOrDefault(x => x.Type == "field2")?.Value;
+
+                if (user != null)
+                {
+                    result = user;
+                }
+                else result = string.Empty;
+            }
+
+            return result;
+        }
+
+        public string GetTokenTypeFromRefreshToken(string token)
+        {
+            var result = string.Empty;
+            string jwtKey = _configuration["Jwt:Secret"]!;
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                tokenHandler.ValidateToken(token, tokenValidationParameters, out var validatedToken);
+                result = ((JwtSecurityToken)validatedToken).Claims
+                    .FirstOrDefault(x => x.Type == "field3")?.Value;
             }
             catch (Exception)
             {

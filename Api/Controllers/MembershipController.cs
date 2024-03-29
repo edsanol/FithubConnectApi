@@ -4,12 +4,14 @@ using Application.Dtos.Response;
 using Application.Interfaces;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MembershipController : ControllerBase
     {
         private readonly IMembershipApplication _membershipApplication;
@@ -27,10 +29,10 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("Select/{gymId:int}")]
-        public async Task<ActionResult<BaseResponse<IEnumerable<MembershipSelectResponseDto>>>> ListMembershipsSelect(int gymId)
+        [HttpGet("Select")]
+        public async Task<ActionResult<BaseResponse<IEnumerable<MembershipSelectResponseDto>>>> ListMembershipsSelect()
         {
-            var response = await _membershipApplication.ListMembershipsSelect(gymId);
+            var response = await _membershipApplication.ListMembershipsSelect();
 
             return Ok(response);
         }

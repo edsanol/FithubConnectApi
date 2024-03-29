@@ -15,5 +15,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<Gym> LoginGym(string email);
         Task<bool> ResetPasswordAsync(int gymId, string newPassword);
         Task<bool> ChangePasswordAsync(int gymId, string newPassword);
+        Task<bool> HasAthleteByAthleteID(int gymID, int athleteID);
     }
 }

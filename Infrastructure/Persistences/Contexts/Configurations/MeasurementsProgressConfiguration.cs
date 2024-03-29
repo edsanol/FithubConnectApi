@@ -17,7 +17,7 @@ namespace Infrastructure.Persistences.Contexts.Configurations
             builder.HasOne(d => d.IdAthleteNavigation).WithMany(p => p.MeasurementsProgresses)
                 .HasForeignKey(d => d.IdAthlete)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("athlete and measurements progress relation");
+                .HasConstraintName("athlete and athlete token relation");
         }
     }
 }

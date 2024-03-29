@@ -40,7 +40,7 @@ namespace Infrastructure.Persistences.Repositories
 
             if (!string.IsNullOrEmpty(filters.StartDate))
             {
-                query = query.Where(x => x.Date == DateOnly.FromDateTime(Convert.ToDateTime(filters.StartDate)));
+                query = query.Where(x => x.Date >= DateOnly.FromDateTime(Convert.ToDateTime(filters.StartDate)));
             }
 
             filters.Sort ??= "Date";
@@ -53,7 +53,36 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<bool> RecordMeasurementProgress(MeasurementsProgress measurementProgress)
         {
-            await _context.MeasurementsProgress.AddAsync(measurementProgress);
+            var progressYear = measurementProgress.Date.Value.Year;
+            var progressMonth = measurementProgress.Date.Value.Month;
+
+            var existingMeasurement = await _context.MeasurementsProgress
+                .Where(x => x.IdAthlete == measurementProgress.IdAthlete &&
+                            x.Date.Value.Year == progressYear &&
+                            x.Date.Value.Month == progressMonth)
+                .FirstOrDefaultAsync();
+
+            if (existingMeasurement != null)
+            {
+                existingMeasurement.Gluteus = measurementProgress.Gluteus;
+                existingMeasurement.Biceps = measurementProgress.Biceps;
+                existingMeasurement.Chest = measurementProgress.Chest;
+                existingMeasurement.Waist = measurementProgress.Waist;
+                existingMeasurement.Thigh = measurementProgress.Thigh;
+                existingMeasurement.Calf = measurementProgress.Calf;
+                existingMeasurement.Shoulders = measurementProgress.Shoulders;
+                existingMeasurement.Forearm = measurementProgress.Forearm;
+                existingMeasurement.Height = measurementProgress.Height;
+                existingMeasurement.Weight = measurementProgress.Weight;
+                existingMeasurement.Date = measurementProgress.Date;
+
+                _context.MeasurementsProgress.Update(existingMeasurement);
+            }
+            else
+            {
+                await _context.MeasurementsProgress.AddAsync(measurementProgress);
+            }
+
             var recordsAffected = await _context.SaveChangesAsync();
 
             return recordsAffected > 0;
@@ -68,31 +97,39 @@ namespace Infrastructure.Persistences.Repositories
                 .AsNoTracking()
                 .ToListAsync();
 
-            if (measurements.Count < 2) return Enumerable.Empty<MeasurementsByLastMonthResponse>();
-
-            var lastMeasurement = measurements[0];
-            var previousMeasurement = measurements[1];
+            if (!measurements.Any()) return Enumerable.Empty<MeasurementsByLastMonthResponse>();
 
             var result = new List<MeasurementsByLastMonthResponse>();
+
+            // Asignar lastMeasurement al último registro. Si solo hay uno, previousMeasurement será null
+            var lastMeasurement = measurements.FirstOrDefault();
+            var previousMeasurement = measurements.Count > 1 ? measurements[1] : null;
 
             foreach (var muscle in new[] { "Gluteus", "Biceps", "Chest", "Waist", "Thigh", "Calf", "Shoulders", "Forearm", "Height", "Weight" })
             {
                 var lastValue = GetMuscleValue(lastMeasurement, muscle);
-                var previousValue = GetMuscleValue(previousMeasurement, muscle);
+                var progress = 0.0;
+                var progressPercentage = 0.0;
 
-                if (lastValue.HasValue && previousValue.HasValue && previousValue.Value != 0)
+                // Si existe un previousMeasurement, calcular el progreso y porcentaje de progreso
+                if (previousMeasurement != null)
                 {
-                    var progress = lastValue.Value - previousValue.Value;
-                    var progressPercentage = (progress / previousValue.Value) * 100;
-
-                    result.Add(new MeasurementsByLastMonthResponse
+                    var previousValue = GetMuscleValue(previousMeasurement, muscle);
+                    if (lastValue.HasValue && previousValue.HasValue && previousValue.Value != 0)
                     {
-                        Muscle = muscle,
-                        Progress = progress,
-                        Measurement = lastValue.Value,
-                        ProgressPercentage = progressPercentage
-                    });
+                        progress = lastValue.Value - previousValue.Value;
+                        progressPercentage = (progress / previousValue.Value) * 100;
+                    }
                 }
+
+                // Añadir el resultado incluso si solo hay un registro (con progreso y porcentaje en 0 si es necesario)
+                result.Add(new MeasurementsByLastMonthResponse
+                {
+                    Muscle = muscle,
+                    Progress = (float)progress,
+                    Measurement = lastValue ?? 0, // Usar el valor medido o 0 si no hay valor
+                    ProgressPercentage = (float)progressPercentage
+                });
             }
 
             return result;
@@ -108,7 +145,7 @@ namespace Infrastructure.Persistences.Repositories
                 "waist" => x => (float)x.Waist,
                 "thigh" => x => (float)x.Thigh,
                 "calf" => x => (float)x.Calf,
-                "shoulder" => x => (float)x.Shoulders,
+                "shoulders" => x => (float)x.Shoulders,
                 "forearm" => x => (float)x.Forearm,
                 "height" => x => (float)x.Height,
                 "weight" => x => (float)x.Weight,

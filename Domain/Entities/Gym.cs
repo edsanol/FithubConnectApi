@@ -33,4 +33,6 @@ public partial class Gym
     public virtual ICollection<Discount> Discounts { get; set; } = new List<Discount>();
 
     public virtual ICollection<AccessLog> AccessLogs { get; set; } = new List<AccessLog>();
+
+    public virtual ICollection<GymToken> GymToken { get; set; } = new List<GymToken>();
 }

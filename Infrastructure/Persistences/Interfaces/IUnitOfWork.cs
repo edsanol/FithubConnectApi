@@ -12,6 +12,9 @@
         ICardAccessRepository CardAccessRepository { get; }
         IAccessLogRepository AccessLogRepository { get;  }
         IMeasurementProgressRepository MeasurementProgressRepository { get; }
+        IContactInformationRepository ContactInformationRepository { get; }
+        IAthleteTokenRepository AthleteTokenRepository { get; }
+        IGymTokenRepository GymTokenRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();

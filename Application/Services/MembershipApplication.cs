@@ -17,12 +17,14 @@ namespace Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly MembershipVaidator _validationRules;
+        private readonly IJwtHandler _jwtHandler;
 
-        public MembershipApplication(IUnitOfWork unitOfWork, IMapper mapper, MembershipVaidator validationRules)
+        public MembershipApplication(IUnitOfWork unitOfWork, IMapper mapper, MembershipVaidator validationRules, IJwtHandler jwtHandler)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _validationRules = validationRules;
+            _jwtHandler = jwtHandler;
         }
 
         public async Task<BaseResponse<bool>> CreateMembership(MembershipRequestDto membership)
@@ -121,9 +123,19 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<IEnumerable<MembershipSelectResponseDto>>> ListMembershipsSelect(int gymID)
+        public async Task<BaseResponse<IEnumerable<MembershipSelectResponseDto>>> ListMembershipsSelect()
         {
             var response = new BaseResponse<IEnumerable<MembershipSelectResponseDto>>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
             var memberships = await _unitOfWork.MembershipRepository.ListSelectMemberships(gymID);
 
             if (memberships is not null)

@@ -19,7 +19,7 @@ namespace Application.Services
 
         public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> GetDailyAssistanceGraphic(DateOnly startDate, DateOnly endDate)
         {
-            var gymID = _jwtHandler.ExtractGymIdFromToken();
+            var gymID = _jwtHandler.ExtractIdFromToken();
             var response = new BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>();
             var graphic = await _unitOfWork.AthleteRepository.GetDailyAssistance(gymID, startDate, endDate);
 
@@ -39,7 +39,7 @@ namespace Application.Services
 
         public async Task<BaseResponse<DashboardAthleteResponseDto>> GetDashboard()
         {
-            var gymID = _jwtHandler.ExtractGymIdFromToken();
+            var gymID = _jwtHandler.ExtractIdFromToken();
             var response = new BaseResponse<DashboardAthleteResponseDto>();
             var dashboard = await _unitOfWork.AthleteRepository.DashboardAthletes(gymID);
 
@@ -69,7 +69,7 @@ namespace Application.Services
 
         public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> GetIncomeGraphic(DateOnly startDate, DateOnly endDate)
         {
-            var gymID = _jwtHandler.ExtractGymIdFromToken();
+            var gymID = _jwtHandler.ExtractIdFromToken();
             var response = new BaseResponse<DashboardAthleteResponseDto>();
             var graphic = await _unitOfWork.AthleteMembershipRepository.GetIncome(gymID, startDate, endDate);
 
@@ -89,7 +89,7 @@ namespace Application.Services
 
         public async Task<BaseResponse<IEnumerable<DashboardPieResponseDto>>> GetMembershipPercentage()
         {
-            var gymID = _jwtHandler.ExtractGymIdFromToken();
+            var gymID = _jwtHandler.ExtractIdFromToken();
             var response = new BaseResponse<IEnumerable<DashboardPieResponseDto>>();
             var pie = await _unitOfWork.MembershipRepository.MembershipPercentage(gymID);
 

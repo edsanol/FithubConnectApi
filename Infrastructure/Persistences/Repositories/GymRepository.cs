@@ -121,5 +121,12 @@ namespace Infrastructure.Persistences.Repositories
             var recordsAffected = await _context.SaveChangesAsync();
             return recordsAffected > 0;
         }
+
+        public async Task<bool> HasAthleteByAthleteID(int gymID, int athleteID)
+        {
+            var gym = await _context.Gym.AsNoTracking().Include(x => x.Athletes).FirstOrDefaultAsync(x => x.GymId.Equals(gymID));
+            var athlete = gym.Athletes.FirstOrDefault(x => x.AthleteId.Equals(athleteID));
+            return athlete != null;
+        }
     }
 }

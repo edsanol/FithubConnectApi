@@ -25,7 +25,13 @@ namespace Application.Services
         private readonly DbFithubContext _context;
         private readonly IJwtHandler _jwtHandler;
 
-        public AthleteApplication(IUnitOfWork unitOfWork, IMapper mapper, AthleteValidator validationRules, MeasurementProgressValidator measurementValidationRules, DbFithubContext _context, IJwtHandler jwtHandler)
+        public AthleteApplication(IUnitOfWork unitOfWork, 
+            IMapper mapper, 
+            AthleteValidator validationRules, 
+            MeasurementProgressValidator measurementValidationRules, 
+            DbFithubContext _context, 
+            IJwtHandler jwtHandler
+            )
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -33,6 +39,38 @@ namespace Application.Services
             _measurementValidationRules = measurementValidationRules;
             this._context = _context;
             _jwtHandler = jwtHandler;
+        }
+
+        private async Task<bool> RefreshTokenLogic(int athleteID, string refreshToken)
+        {
+            var actualRefreshToken = await _unitOfWork.AthleteTokenRepository.GetAthleteToken(athleteID);
+            if (actualRefreshToken is not null && actualRefreshToken.Length > 0)
+            {
+                var revokeTokenStatus = await _unitOfWork.AthleteTokenRepository.RevokeAthleteToken(actualRefreshToken);
+
+                if (!revokeTokenStatus)
+                {
+                    return false;
+                }
+            }
+
+            var newRefreshToken = new AthleteToken
+            {
+                TokenID = 0,
+                IdAthlete = athleteID,
+                Token = refreshToken,
+                Expires = DateOnly.FromDateTime(DateTime.Now.AddMinutes(21600)),
+                Revoked = false,
+            };
+
+            bool result = await _unitOfWork.AthleteTokenRepository.RegisterAthleteToken(newRefreshToken);
+
+            if (!result)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public async Task<bool> AccessAthlete(string accessAthleteDto)
@@ -98,6 +136,25 @@ namespace Application.Services
         public async Task<BaseResponse<AthleteResponseDto>> AthleteById(int athleteID)
         {
             var response = new BaseResponse<AthleteResponseDto>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            var hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(gymID, athleteID);
+            if (!hasAthlete)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                return response;
+            }
+
             var athlete = await _unitOfWork.AthleteRepository.AthleteById(athleteID);
 
             if (athlete is not null)
@@ -120,21 +177,38 @@ namespace Application.Services
             var response = new BaseResponse<bool>();
             IDbContextTransaction? transaction = null;
 
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            var hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(gymID, athleteID);
+            if (!hasAthlete)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                return response;
+            }
+
             try
             {
-                var athleteEdit = await AthleteById(athleteID);
-
-                if (athleteEdit.Data is null)
-                {
-                    throw new Exception("El atleta no existe");
-                }
-
+                var gym = await _unitOfWork.GymRepository.GetGymById(gymID);
+                var athleteEdit = await _unitOfWork.AthleteRepository.AthleteById(athleteID) ?? throw new Exception("El atleta no existe");
                 transaction = _context.Database.BeginTransaction();
 
                 var athlete = _mapper.Map<Athlete>(athleteDto);
-                athlete.AthleteId = athleteID;
+                athlete.AthleteId = athleteEdit.AthleteId;
+                athlete.IdGym = athleteEdit.IdGym;
+                athlete.AuditCreateDate = athleteEdit.AuditCreateDate;
+                athlete.AuditCreateUser = athleteEdit.AuditCreateUser;
                 athlete.AuditUpdateDate = DateTime.Now;
-                athlete.AuditUpdateUser = athleteDto.GymName;
+                athlete.AuditUpdateUser = gym.GymName;
                 response.Data = await _unitOfWork.AthleteRepository.EditAthlete(athlete);
 
                 if (!response.Data)
@@ -142,7 +216,7 @@ namespace Application.Services
                     throw new Exception("Error al editar al atleta");
                 }
 
-                var existCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(athleteEdit.Data.CardAccessCode);
+                var existCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(athleteEdit.CardAccesses.Last().CardNumber);
 
                 if (existCardAccess != null && existCardAccess.Status == true && existCardAccess.IdAthlete != athleteID)
                 {
@@ -219,10 +293,35 @@ namespace Application.Services
 
             return response;
         }
-
-        public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> GetMeasurementsGraphic(int athleteID, string muscle, DateOnly startDate, DateOnly endDate)
+        
+        public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> 
+            GetMeasurementsGraphic(string muscle, DateOnly startDate, DateOnly endDate, int athleteID)
         {
+            var userID = _jwtHandler.ExtractIdFromToken();
             var response = new BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role == "deportista")
+            {
+                athleteID = userID;
+            }
+            else if (role == "gimnasio" && athleteID > 0)
+            {
+                bool hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(userID, athleteID);
+                if (!hasAthlete)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                    return response;
+                }
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
             var graphic = await _unitOfWork.MeasurementProgressRepository.GetMeasurementsGraphic(athleteID, muscle, startDate, endDate);
 
             response.IsSuccess = true;
@@ -232,9 +331,34 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>> GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID)
+        public async Task<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>> 
+            GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID)
         {
             var response = new BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>();
+            var userID = _jwtHandler.ExtractIdFromToken();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role == "deportista")
+            {
+                athleteID = userID;
+            }
+            else if (role == "gimnasio" && athleteID > 0)
+            {
+                bool hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(userID, athleteID);
+                if (!hasAthlete)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                    return response;
+                }
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
             var measurementProgress = await _unitOfWork.MeasurementProgressRepository.GetMeasurementProgressList(filters, athleteID);
 
             if (measurementProgress is not null)
@@ -254,7 +378,7 @@ namespace Application.Services
 
         public async Task<BaseResponse<BaseEntityResponse<AthleteResponseDto>>> ListAthletes(BaseFiltersRequest filters)
         {
-            var gymID = _jwtHandler.ExtractGymIdFromToken();
+            var gymID = _jwtHandler.ExtractIdFromToken();
             var response = new BaseResponse<BaseEntityResponse<AthleteResponseDto>>();
             var athletes = await _unitOfWork.AthleteRepository.ListAthlete(filters, gymID);
 
@@ -284,7 +408,18 @@ namespace Application.Services
                 {
                     response.IsSuccess = true;
                     response.Data = _mapper.Map<AthleteResponseDto>(athlete);
-                    response.Message = ReplyMessage.MESSAGE_QUERY;
+                    response.Data.Token = await _jwtHandler.GenerateAthleteToken(athlete);
+                    response.Data.RefreshToken = await _jwtHandler.GenerateAthleteRefreshToken(athlete);
+                    response.Message = ReplyMessage.MESSAGE_LOGIN;
+
+                    bool result = await RefreshTokenLogic(athlete.AthleteId, response.Data.RefreshToken);
+
+                    if (!result)
+                    {
+                        response.IsSuccess = false;
+                        response.Message = ReplyMessage.MESSAGE_FAILED;
+                        response.Data = null;
+                    }
                 }
                 else
                 {
@@ -304,6 +439,31 @@ namespace Application.Services
         public async Task<BaseResponse<bool>> RecordMeasurementProgress(MeasurementProgressRequestDto measurementProgressDto)
         {
             var response = new BaseResponse<bool>();
+            int userID = _jwtHandler.ExtractIdFromToken();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role == "deportista")
+            {
+                measurementProgressDto.IdAthlete = userID;
+            }
+            else if (role == "gimnasio" && measurementProgressDto.IdAthlete is not null && measurementProgressDto.IdAthlete > 0)
+            {
+                int athleteID = Convert.ToInt32(measurementProgressDto.IdAthlete);
+                bool hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(userID, athleteID);
+                if (!hasAthlete)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                    return response;
+                }
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+            
             var validationResults = await _measurementValidationRules.ValidateAsync(measurementProgressDto);
 
             if (!validationResults.IsValid)
@@ -336,10 +496,21 @@ namespace Application.Services
         public async Task<BaseResponse<bool>> RegisterAthlete(AthleteRequestDto athleteDto)
         {
             var response = new BaseResponse<bool>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
             IDbContextTransaction? transaction = null;
 
             try
             {
+                var gym = await _unitOfWork.GymRepository.GetGymById(gymID);
                 var validationResults = await _validationRules.ValidateAsync(athleteDto);
 
                 if (!validationResults.IsValid)
@@ -353,7 +524,8 @@ namespace Application.Services
                 transaction = _context.Database.BeginTransaction();
                 var athlete = _mapper.Map<Athlete>(athleteDto);
                 athlete.AuditCreateDate = DateTime.Now;
-                athlete.AuditCreateUser = athleteDto.GymName;
+                athlete.AuditCreateUser = gym.GymName;
+                athlete.IdGym = gym.GymId;
 
                 var result = await _unitOfWork.AthleteRepository.RegisterAthlete(athlete);
 
@@ -377,31 +549,31 @@ namespace Application.Services
                     throw new Exception("Error al registrar la membresía del atleta");
                 }
 
-                if (athleteDto.CardAccessCode is null)
-                {
-                    throw new Exception("El código de acceso no puede ser nulo");
-                }
+                //if (athleteDto.CardAccessCode is null)
+                //{
+                //    throw new Exception("El código de acceso no puede ser nulo");
+                //}
 
-                var existCardAccess = await _unitOfWork.CardAccessRepository.GetActiveAccessByCode(athleteDto.CardAccessCode);
+                //var existCardAccess = await _unitOfWork.CardAccessRepository.GetActiveAccessByCode(athleteDto.CardAccessCode);
 
-                if (existCardAccess)
-                {
-                    throw new Exception("El código de acceso ya se encuentra registrado");
-                }
+                //if (existCardAccess)
+                //{
+                //    throw new Exception("El código de acceso ya se encuentra registrado");
+                //}
 
-                var cardAccess = new CardAccess
-                {
-                    IdAthlete = athlete.AthleteId,
-                    CardNumber = athleteDto.CardAccessCode,
-                    ExpirationDate = null,
-                    Status = true,
-                };
+                //var cardAccess = new CardAccess
+                //{
+                //    IdAthlete = athlete.AthleteId,
+                //    CardNumber = athleteDto.CardAccessCode,
+                //    ExpirationDate = null,
+                //    Status = true,
+                //};
 
-                var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(cardAccess);
-                if (!resultCardAccess)
-                {
-                    throw new Exception("Error al registrar el código de acceso");
-                }
+                //var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(cardAccess);
+                //if (!resultCardAccess)
+                //{
+                //    throw new Exception("Error al registrar el código de acceso");
+                //}
 
                 transaction.Commit();
 
@@ -451,7 +623,16 @@ namespace Application.Services
 
                 response.IsSuccess = true;
                 response.Data = _mapper.Map<AthleteResponseDto>(athlete);
+                response.Data.Token = await _jwtHandler.GenerateAthleteToken(athlete);
+                response.Data.RefreshToken = await _jwtHandler.GenerateAthleteRefreshToken(athlete);
                 response.Message = ReplyMessage.MESSAGE_SAVE;
+
+                bool resultRefreshToken = await RefreshTokenLogic(athlete.AthleteId, response.Data.RefreshToken);
+
+                if (!resultRefreshToken)
+                {
+                    throw new Exception("Error al refrescar el token");
+                }
             }
             catch (Exception ex)
             {
@@ -470,6 +651,26 @@ namespace Application.Services
         public async Task<BaseResponse<bool>> RemoveAthlete(int athleteID)
         {
             var response = new BaseResponse<bool>();
+
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            var hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(gymID, athleteID);
+            if (!hasAthlete)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                return response;
+            }
+
             var athlete = await AthleteById(athleteID);
 
             if (athlete.Data is null)
@@ -497,6 +698,25 @@ namespace Application.Services
         public async Task<BaseResponse<bool>> UpdateMembershipToAthlete(MembershipToAthleteRequestDto membershipToAthleteDto)
         {
             var response = new BaseResponse<bool>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            var hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(gymID, membershipToAthleteDto.AthleteId);
+            if (!hasAthlete)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                return response;
+            }
+
             IDbContextTransaction? transaction = null;
 
             try
@@ -582,12 +802,175 @@ namespace Application.Services
 
         public async Task<BaseResponse<IEnumerable<MeasurementsByLastMonthResponseDto>>> GetMeasurementsByLastMonth(int athleteID)
         {
+            var userID = _jwtHandler.ExtractIdFromToken();
             var response = new BaseResponse<IEnumerable<MeasurementsByLastMonthResponseDto>>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role == "deportista")
+            {
+                athleteID = userID;
+            }
+            else if (role == "gimnasio" && athleteID > 0)
+            {
+                bool hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(userID, athleteID);
+                if (!hasAthlete)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                    return response;
+                }
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
             var measurements = await _unitOfWork.MeasurementProgressRepository.GetMeasurementsByLastMonth(athleteID);
 
             response.IsSuccess = true;
             response.Data = _mapper.Map<IEnumerable<MeasurementsByLastMonthResponseDto>>(measurements);
             response.Message = ReplyMessage.MESSAGE_QUERY;
+
+            return response;
+        }
+
+        public async Task<BaseResponse<AthleteResponseDto>> RefreshAuthToken(string refreshToken)
+        {
+            var response = new BaseResponse<AthleteResponseDto>();
+            string role = _jwtHandler.GetRoleFromRefreshToken(refreshToken);
+            string tokenType = _jwtHandler.GetTokenTypeFromRefreshToken(refreshToken);
+            bool refreshTokenValid = await _unitOfWork.AthleteTokenRepository.GetRevokeStatus(refreshToken);
+
+            if (role != "deportista" || tokenType != "refresh" || refreshTokenValid == true)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                return response;
+            }
+
+            var athleteID = _jwtHandler.GetIdFromRefreshToken(refreshToken);
+            var athleteFromToken = await _unitOfWork.AthleteRepository.AthleteById(athleteID);
+
+            if (athleteFromToken is not null)
+            {
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<AthleteResponseDto>(athleteFromToken);
+                response.Data.Token = await _jwtHandler.GenerateAthleteToken(athleteFromToken);
+                response.Data.RefreshToken = await _jwtHandler.GenerateAthleteRefreshToken(athleteFromToken);
+                response.Message = ReplyMessage.MESSAGE_QUERY;
+
+                bool result = await RefreshTokenLogic(athleteFromToken.AthleteId, response.Data.RefreshToken);
+
+                if (!result)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_FAILED;
+                    response.Data = null;
+                }
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<AthleteEditResponseDto>> EditAthleteMobile(AthleteEditRequestDto athleteDto)
+        {
+            var response = new BaseResponse<AthleteEditResponseDto>();
+
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "deportista")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            IDbContextTransaction? transaction = null;
+
+            try
+            {
+                var missingFields = new List<string>();
+
+                if (string.IsNullOrWhiteSpace(athleteDto.AthleteName))
+                    missingFields.Add("AthleteName");
+                if (string.IsNullOrWhiteSpace(athleteDto.AthleteLastName))
+                    missingFields.Add("AthleteLastName");
+                if (string.IsNullOrWhiteSpace(athleteDto.Email))
+                    missingFields.Add("Email");
+                if (string.IsNullOrWhiteSpace(athleteDto.PhoneNumber))
+                    missingFields.Add("PhoneNumber");
+                if (string.IsNullOrWhiteSpace(athleteDto.Genre))
+                    missingFields.Add("Genre");
+
+                if (missingFields.Any())
+                {
+                    throw new Exception("No pueden haber campos nulos o vacios");
+                }
+
+                var athleteID = _jwtHandler.ExtractIdFromToken();
+                var athleteEdit = await _unitOfWork.AthleteRepository.AthleteById(athleteID) ?? throw new Exception("El atleta no existe");
+                transaction = _context.Database.BeginTransaction();
+
+                var athlete = _mapper.Map<Athlete>(athleteDto);
+                athlete.AthleteId = athleteID;
+                athlete.AuditUpdateDate = DateTime.Now;
+                athlete.AuditUpdateUser = Convert.ToString("Athlete" + athleteID);
+                athlete.AuditCreateDate = athleteEdit.AuditCreateDate;
+                athlete.AuditCreateUser = athleteEdit.AuditCreateUser;
+                athlete.Password = athleteEdit.Password;
+                athlete.IdGym = athleteEdit.IdGym;
+                athlete.Status = athleteEdit.Status;
+                bool update = await _unitOfWork.AthleteRepository.EditAthlete(athlete);
+
+                if (!update)
+                {
+                    throw new Exception("Error al editar al atleta");
+                }
+
+                var athleteEdited = await _unitOfWork.AthleteRepository.AthleteById(athleteID);
+
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<AthleteEditResponseDto>(athleteEdited);
+                response.Message = ReplyMessage.MESSAGE_QUERY;
+
+                transaction.Commit();
+            }
+            catch(Exception ex)
+            {
+                response.Message = ex.Message;
+                response.IsSuccess = false;
+            }
+            finally
+            {
+                transaction?.Dispose();
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<ContactInformationResponseDto>> GetContactInformation()
+        {
+            var response = new BaseResponse<ContactInformationResponseDto>();
+            var contactInformation = await _unitOfWork.ContactInformationRepository.GetContactInformation();
+
+            if (contactInformation is not null)
+            {
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<ContactInformationResponseDto>(contactInformation);
+                response.Message = ReplyMessage.MESSAGE_QUERY;
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+            }
 
             return response;
         }
