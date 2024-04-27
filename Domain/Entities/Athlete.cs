@@ -34,6 +34,8 @@ public partial class Athlete
 
     public bool? Status { get; set; }
 
+    public string? FingerPrint { get; set; }
+
     public virtual Gym IdGymNavigation { get; set; } = null!;
 
     public virtual ICollection<AccessLog> AccessLogs { get; set; } = new List<AccessLog>();

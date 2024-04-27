@@ -36,17 +36,15 @@ namespace Infrastructure.Persistences.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<bool> RevokeGymToken(int[] tokenID)
+        public async Task<bool> RevokeGymToken(string actualToken)
         {
-            var tokens = await _context.GymToken.Where(x => tokenID.Contains(x.TokenID)).ToListAsync();
-            if (tokens == null)
+            var token = await _context.GymToken.Where(x => actualToken.Equals(x.Token) && x.Revoked == false).FirstOrDefaultAsync();
+            if (token == null)
                 return false;
 
-            foreach (var token in tokens)
-            {
-                token.Revoked = true;
-                _context.GymToken.Update(token);
-            }
+            token.Revoked = true;
+            _context.GymToken.Update(token);
+
 
             return await _context.SaveChangesAsync() > 0;
         }

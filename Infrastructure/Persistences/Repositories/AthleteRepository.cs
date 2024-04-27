@@ -4,6 +4,7 @@ using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Infrastructure.Persistences.Repositories
 {
@@ -144,12 +145,19 @@ namespace Infrastructure.Persistences.Repositories
         public async Task<bool> DeleteAthlete(int athleteID)
         {
             var athlete = await _context.Athlete.AsNoTracking().SingleOrDefaultAsync(x => x.AthleteId.Equals(athleteID));
-            athlete.Status = false;
-            athlete.AuditDeleteDate = Convert.ToDateTime(athlete.AuditDeleteDate);
-            _context.Update(athlete);
-            var recordsAffected = await _context.SaveChangesAsync();
+            if (athlete != null)
+            {
+                athlete.Status = false;
+                athlete.AuditDeleteDate = Convert.ToDateTime(athlete.AuditDeleteDate);
+                _context.Update(athlete);
+                var recordsAffected = await _context.SaveChangesAsync();
 
-            return recordsAffected > 0;
+                return recordsAffected > 0;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public async Task<bool> EditAthlete(Athlete athlete)
@@ -199,6 +207,7 @@ namespace Infrastructure.Persistences.Repositories
                     AuditUpdateDate = x.AuditUpdateDate,
                     AuditDeleteUser = x.AuditDeleteUser,
                     AuditDeleteDate = x.AuditDeleteDate,
+                    FingerPrint = x.FingerPrint,
                     CardAccesses = x.CardAccesses
                         .Select(ca => new CardAccess
                         {
@@ -240,6 +249,27 @@ namespace Infrastructure.Persistences.Repositories
                     case 4:
                         athletes = athletes.Where(x => x.IdGym.Equals(Int32.Parse(filters.TextFilter)) && x.Status.Equals(true));
                         break;
+                    case 5:
+                        if (filters.TextFilter == "string")
+                        {
+                            athletes = athletes.Where(x => x.IdGym.Equals(gymID) &&
+                                x.AthleteMemberships.Any(am => !string.IsNullOrEmpty(am.IdMembershipNavigation.MembershipName) &&
+                                    am.EndDate >= DateOnly.FromDateTime(DateTime.Now))
+                            );
+                        }
+                        else
+                        {
+                            DateTime endDate = string.IsNullOrEmpty(filters.EndDate) ? DateTime.MinValue : DateTime.Parse(filters.EndDate);
+                            List<int> excludedAthleteIds = filters.TextFilter.Split(',').Select(int.Parse).ToList();
+
+                            athletes = athletes.Where(x => x.IdGym.Equals(gymID) &&
+                                x.AthleteMemberships.Any(am => !string.IsNullOrEmpty(am.IdMembershipNavigation.MembershipName) &&
+                                    am.EndDate >= DateOnly.FromDateTime(DateTime.Now)) &&
+                                !excludedAthleteIds.Contains(x.AthleteId) ||
+                                (excludedAthleteIds.Contains(x.AthleteId) && x.AuditUpdateDate > endDate));
+                        }
+
+                        break;
                 }
             }
 
@@ -254,7 +284,6 @@ namespace Infrastructure.Persistences.Repositories
             }
 
             filters.Sort ??= "AthleteId";
-
             response.TotalRecords = await athletes.CountAsync();
             response.Items = await Ordering(filters, athletes, !(bool)filters.Download!).ToListAsync();
 
@@ -263,7 +292,48 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<Athlete> LoginAthlete(string email)
         {
-            var athlete = await _context.Athlete.AsNoTracking().FirstOrDefaultAsync(x => x.Email.Equals(email));
+            var athlete = _context.Athlete
+                .Where(x => x.Email.Equals(email))
+                .Select(x => new Athlete
+                {
+                    AthleteId = x.AthleteId,
+                    AthleteName = x.AthleteName,
+                    AthleteLastName = x.AthleteLastName,
+                    BirthDate = x.BirthDate,
+                    Email = x.Email,
+                    PhoneNumber = x.PhoneNumber,
+                    Genre = x.Genre,
+                    Password = x.Password,
+                    IdGym = x.IdGym,
+                    AuditCreateUser = x.AuditCreateUser,
+                    AuditCreateDate = x.AuditCreateDate,
+                    AuditUpdateUser = x.AuditUpdateUser,
+                    AuditUpdateDate = x.AuditUpdateDate,
+                    AuditDeleteUser = x.AuditDeleteUser,
+                    AuditDeleteDate = x.AuditDeleteDate,
+                    FingerPrint = x.FingerPrint,
+                    CardAccesses = x.CardAccesses
+                        .Select(ca => new CardAccess
+                        {
+                            CardId = ca.CardId,
+                            CardNumber = ca.CardNumber,
+                            IdAthlete = ca.IdAthlete,
+                            Status = ca.Status
+                        }).ToList(),
+                    Status = x.Status,
+                    AthleteMemberships = x.AthleteMemberships
+                        .Select(am => new AthleteMembership
+                        {
+                            StartDate = am.StartDate,
+                            EndDate = am.EndDate,
+                            IdMembershipNavigation = new Membership
+                            {
+                                MembershipName = am.IdMembershipNavigation.MembershipName,
+                                Cost = am.IdMembershipNavigation.Cost,
+                                MembershipId = am.IdMembershipNavigation.MembershipId,
+                            }
+                        }).ToList()
+                }).AsNoTracking().SingleOrDefault();
 
             return athlete!;
         }
@@ -277,14 +347,34 @@ namespace Infrastructure.Persistences.Repositories
 
         }
 
+        public async Task<bool> RegisterAthleteFingerPrint(int athleteID, string fingerPrint)
+        {
+            var athlete = await _context.Athlete.AsNoTracking().SingleOrDefaultAsync(x => x.AthleteId.Equals(athleteID));
+            if (athlete != null)
+            {
+                athlete.FingerPrint = fingerPrint;
+                athlete.AuditUpdateDate = DateTime.Now;
+                athlete.AuditUpdateUser = "System";
+                _context.Update(athlete);
+                var recordsAffected = await _context.SaveChangesAsync();
+
+                return recordsAffected > 0;
+            }
+            return false;
+        }
+
         public async Task<bool> RegisterPassword(int athleteID, string password)
         {
             var athlete = await _context.Athlete.AsNoTracking().SingleOrDefaultAsync(x => x.AthleteId.Equals(athleteID));
-            athlete.Password = password;
-            _context.Update(athlete);
-            var recordsAffected = await _context.SaveChangesAsync();
+            if (athlete != null)
+            {
+                athlete.Password = password;
+                _context.Update(athlete);
+                var recordsAffected = await _context.SaveChangesAsync();
 
-            return recordsAffected > 0;
+                return recordsAffected > 0;
+            }
+            return false;
         }
     }
 }

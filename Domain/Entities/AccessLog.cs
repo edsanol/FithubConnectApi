@@ -9,15 +9,15 @@ public partial class AccessLog
 
     public int IdAthlete { get; set; }
 
-    public int IdCard { get; set; }
+    public int? IdCard { get; set; }
 
     public DateTime AccessDateTime { get; set; }
 
     public int IdGym { get; set; }
 
-    public virtual Athlete IdAthleteNavigation { get; set; } = null!;
+    public int AccessType { get; set; }
 
-    public virtual CardAccess IdCardNavigation { get; set; } = null!;
+    public virtual Athlete IdAthleteNavigation { get; set; } = null!;
 
     public virtual Gym IdGymNavigation { get; set; } = null!;
 }

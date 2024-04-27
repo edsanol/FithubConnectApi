@@ -25,5 +25,7 @@ namespace Application.Interfaces
         Task<BaseResponse<IEnumerable<MeasurementsByLastMonthResponseDto>>> GetMeasurementsByLastMonth(int athleteID);
         Task<BaseResponse<AthleteResponseDto>> RefreshAuthToken(string refreshToken);
         Task<BaseResponse<ContactInformationResponseDto>> GetContactInformation();
+        Task<BaseResponse<bool>> RegisterAthleteFingerPrint(FingerprintRequest request);
+        Task<BaseResponse<bool>> AccessAthleteFingerPrint(int athleteID);
     }
 }

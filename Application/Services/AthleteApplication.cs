@@ -25,11 +25,11 @@ namespace Application.Services
         private readonly DbFithubContext _context;
         private readonly IJwtHandler _jwtHandler;
 
-        public AthleteApplication(IUnitOfWork unitOfWork, 
-            IMapper mapper, 
-            AthleteValidator validationRules, 
-            MeasurementProgressValidator measurementValidationRules, 
-            DbFithubContext _context, 
+        public AthleteApplication(IUnitOfWork unitOfWork,
+            IMapper mapper,
+            AthleteValidator validationRules,
+            MeasurementProgressValidator measurementValidationRules,
+            DbFithubContext _context,
             IJwtHandler jwtHandler
             )
         {
@@ -41,10 +41,9 @@ namespace Application.Services
             _jwtHandler = jwtHandler;
         }
 
-        private async Task<bool> RefreshTokenLogic(int athleteID, string refreshToken)
+        private async Task<bool> RefreshTokenLogic(int athleteID, string refreshToken, string actualRefreshToken = "")
         {
-            var actualRefreshToken = await _unitOfWork.AthleteTokenRepository.GetAthleteToken(athleteID);
-            if (actualRefreshToken is not null && actualRefreshToken.Length > 0)
+            if (!string.IsNullOrEmpty(actualRefreshToken) && actualRefreshToken.Length > 0)
             {
                 var revokeTokenStatus = await _unitOfWork.AthleteTokenRepository.RevokeAthleteToken(actualRefreshToken);
 
@@ -107,6 +106,7 @@ namespace Application.Services
                     IdCard = existCardAccess.CardId,
                     AccessDateTime = DateTime.Now,
                     IdGym = athlete.Data.IdGym,
+                    AccessType = 1
                 };
 
                 var resultAccess = await _unitOfWork.AccessLogRepository.RegisterAccessLog(access);
@@ -120,7 +120,7 @@ namespace Application.Services
 
                 response = true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 response = false;
                 transaction?.Rollback();
@@ -293,8 +293,8 @@ namespace Application.Services
 
             return response;
         }
-        
-        public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>> 
+
+        public async Task<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>>
             GetMeasurementsGraphic(string muscle, DateOnly startDate, DateOnly endDate, int athleteID)
         {
             var userID = _jwtHandler.ExtractIdFromToken();
@@ -331,7 +331,7 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>> 
+        public async Task<BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>>
             GetMeasurementProgressList(BaseFiltersRequest filters, int athleteID)
         {
             var response = new BaseResponse<BaseEntityResponse<MeasurementProgressResponseDto>>();
@@ -382,7 +382,17 @@ namespace Application.Services
             var response = new BaseResponse<BaseEntityResponse<AthleteResponseDto>>();
             var athletes = await _unitOfWork.AthleteRepository.ListAthlete(filters, gymID);
 
-            if (athletes is not null)
+            if (athletes is not null && filters.NumFilter != 5)
+            {
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<BaseEntityResponse<AthleteResponseDto>>(athletes);
+                foreach (var item in response.Data.Items)
+                {
+                    item.FingerPrint = null;
+                }
+                response.Message = ReplyMessage.MESSAGE_QUERY;
+            }
+            else if (athletes is not null && filters.NumFilter == 5)
             {
                 response.IsSuccess = true;
                 response.Data = _mapper.Map<BaseEntityResponse<AthleteResponseDto>>(athletes);
@@ -463,7 +473,7 @@ namespace Application.Services
                 response.Message = "No autorizado";
                 return response;
             }
-            
+
             var validationResults = await _measurementValidationRules.ValidateAsync(measurementProgressDto);
 
             if (!validationResults.IsValid)
@@ -861,7 +871,7 @@ namespace Application.Services
                 response.Data.RefreshToken = await _jwtHandler.GenerateAthleteRefreshToken(athleteFromToken);
                 response.Message = ReplyMessage.MESSAGE_QUERY;
 
-                bool result = await RefreshTokenLogic(athleteFromToken.AthleteId, response.Data.RefreshToken);
+                bool result = await RefreshTokenLogic(athleteFromToken.AthleteId, response.Data.RefreshToken, refreshToken);
 
                 if (!result)
                 {
@@ -942,7 +952,7 @@ namespace Application.Services
 
                 transaction.Commit();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 response.Message = ex.Message;
                 response.IsSuccess = false;
@@ -970,6 +980,117 @@ namespace Application.Services
             {
                 response.IsSuccess = false;
                 response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<bool>> RegisterAthleteFingerPrint(FingerprintRequest request)
+        {
+            var response = new BaseResponse<bool>();
+            var userID = _jwtHandler.ExtractIdFromToken();
+            string role = _jwtHandler.GetRoleFromToken();
+            int athleteID = Convert.ToInt32(request.AthleteID);
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            if (role == "gimnasio" && athleteID > 0)
+            {
+                bool hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(userID, athleteID);
+                if (!hasAthlete)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                    return response;
+                }
+            }
+
+            IDbContextTransaction? transaction = null;
+
+            try
+            {
+                var athlete = await _unitOfWork.AthleteRepository.AthleteById(Convert.ToInt32(request.AthleteID)) ?? throw new Exception("El atleta no existe");
+
+                transaction = _context.Database.BeginTransaction();
+
+                var result = await _unitOfWork.AthleteRepository.RegisterAthleteFingerPrint(athlete.AthleteId, request.Fingerprint);
+
+                if (!result)
+                {
+                    throw new Exception("Error al registrar la huella del atleta");
+                }
+
+                transaction.Commit();
+
+                response.IsSuccess = true;
+                response.Data = result;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+                response.IsSuccess = false;
+                transaction?.Rollback();
+            }
+            finally
+            {
+                transaction?.Dispose();
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<bool>> AccessAthleteFingerPrint(int athleteID)
+        {
+            var response = new BaseResponse<bool>();
+            var userID = _jwtHandler.ExtractIdFromToken();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            if (role == "gimnasio" && athleteID > 0)
+            {
+                bool hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(userID, athleteID);
+                if (!hasAthlete)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                    return response;
+                }
+            }
+
+            var access = new AccessLog
+            {
+                IdAthlete = athleteID,
+                IdCard = null,
+                AccessDateTime = DateTime.Now,
+                IdGym = userID,
+                AccessType = 2
+            };
+
+            var resultAccess = await _unitOfWork.AccessLogRepository.RegisterAccessLog(access);
+
+            if (!resultAccess)
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_FAILED;
+                response.Data = false;
+            }
+            else
+            {
+                response.IsSuccess = true;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
+                response.Data = true;
             }
 
             return response;

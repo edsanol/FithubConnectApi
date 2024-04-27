@@ -6,7 +6,7 @@ namespace Infrastructure.Persistences.Interfaces
     {
         Task<bool> RegisterAthleteToken(AthleteToken athleteToken);
         Task<int[]> GetAthleteToken(int athleteId);
-        Task<bool> RevokeAthleteToken(int[] tokenID);
+        Task<bool> RevokeAthleteToken(string actualToken);
         Task<bool> GetRevokeStatus(string token);
     }
 }
