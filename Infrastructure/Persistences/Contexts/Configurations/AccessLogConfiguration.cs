@@ -19,11 +19,6 @@ namespace Infrastructure.Persistences.Contexts.Configurations
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("athlete and access log relation");
 
-            builder.HasOne(d => d.IdCardNavigation).WithMany(p => p.AccessLogs)
-                .HasForeignKey(d => d.IdCard)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("card acces and access log relation");
-
             builder.HasOne(d => d.IdGymNavigation).WithMany(p => p.AccessLogs)
                 .HasForeignKey(d => d.IdGym)
                 .OnDelete(DeleteBehavior.ClientSetNull)

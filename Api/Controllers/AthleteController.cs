@@ -125,7 +125,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("AccessAthlete")]
+        [HttpGet("AccessAthleteCard")]
         public async Task<ActionResult<bool>> AccessAthlete(string request)
         {
             var response = await _athleteApplication.AccessAthlete(request);
@@ -234,6 +234,24 @@ namespace Api.Controllers
         public async Task<ActionResult<BaseResponse<ContactInformationResponseDto>>> GetContactInformation()
         {
             var response = await _athleteApplication.GetContactInformation();
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPost("assign")]
+        public async Task<ActionResult<BaseResponse<bool>>> RegisterAthleteFingerPrint([FromBody] FingerprintRequest request)
+        {
+            var response = await _athleteApplication.RegisterAthleteFingerPrint(request);
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpGet("AccessAthleteFingerPrint")]
+        public async Task<ActionResult<BaseResponse<bool>>> AccessAthleteFingerPrint([FromQuery] int athleteID)
+        {
+            var response = await _athleteApplication.AccessAthleteFingerPrint(athleteID);
 
             return Ok(response);
         }

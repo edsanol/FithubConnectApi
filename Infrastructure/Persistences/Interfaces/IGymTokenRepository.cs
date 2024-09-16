@@ -6,7 +6,7 @@ namespace Infrastructure.Persistences.Interfaces
     {
         Task<bool> RegisterGymToken(GymToken gymToken);
         Task<int[]> GetGymToken(int gymId);
-        Task<bool> RevokeGymToken(int[] tokenID);
+        Task<bool> RevokeGymToken(string actualToken);
         Task<bool> GetRevokeStatus(string token);
     }
 }

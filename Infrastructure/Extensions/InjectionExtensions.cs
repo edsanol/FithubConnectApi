@@ -9,13 +9,15 @@ namespace Infrastructure.Extensions
 {
     public static class InjectionExtensions
     {
-        public static IServiceCollection AddInjectionInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddInjectionInfrastructure(this IServiceCollection services, IConfiguration configuration, string connectionString)
         {
             var assembly = typeof(DbFithubContext).Assembly.FullName;
 
             services.AddDbContext<DbFithubContext>(
                 options => options.UseNpgsql(
-                    configuration.GetConnectionString("FitHubConnection"), a => a.MigrationsAssembly(assembly)), ServiceLifetime.Transient);
+                    connectionString,
+                    a => a.MigrationsAssembly(assembly)),
+                    ServiceLifetime.Transient);
 
             services.AddTransient<IUnitOfWork, UnitOfWork>();
 

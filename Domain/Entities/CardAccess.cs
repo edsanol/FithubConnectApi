@@ -13,6 +13,4 @@ public partial class CardAccess
     public bool? Status { get; set; }
 
     public virtual Athlete IdAthleteNavigation { get; set; } = null!;
-
-    public virtual ICollection<AccessLog> AccessLogs { get; set; } = new List<AccessLog>();
 }

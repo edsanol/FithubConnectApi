@@ -31,10 +31,9 @@ namespace Application.Services
             _jwtHandler = jwtHandler;
         }
 
-        private async Task<bool> RefreshTokenLogic(int gymID, string refreshToken)
+        private async Task<bool> RefreshTokenLogic(int gymID, string refreshToken, string actualRefreshToken = "")
         {
-            var actualRefreshToken = await _unitOfWork.GymTokenRepository.GetGymToken(gymID);
-            if (actualRefreshToken is not null && actualRefreshToken.Length > 0)
+            if (!string.IsNullOrEmpty(actualRefreshToken) && actualRefreshToken.Length > 0)
             {
                 var revokeTokenStatus = await _unitOfWork.GymTokenRepository.RevokeGymToken(actualRefreshToken);
 
@@ -446,7 +445,7 @@ namespace Application.Services
                 response.Data.RefreshToken = await _jwtHandler.GenerateRefreshToken(gym);
                 response.Message = ReplyMessage.MESSAGE_LOGIN;
 
-                bool result = await RefreshTokenLogic(gym.GymId, response.Data.RefreshToken);
+                bool result = await RefreshTokenLogic(gym.GymId, response.Data.RefreshToken, refreshToken);
 
                 if (!result)
                 {

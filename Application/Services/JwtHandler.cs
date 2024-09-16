@@ -93,14 +93,15 @@ namespace Application.Services
         private async Task<string> GenerateTokenFunc(Claim[] claims, int expirationTime)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!);
+            var jwtSecret = Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? _configuration["Jwt:Secret"]!);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
                 NotBefore = DateTime.Now,
                 Expires = DateTime.Now.AddMinutes(expirationTime),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.Aes128CbcHmacSha256)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(jwtSecret), SecurityAlgorithms.Aes128CbcHmacSha256)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var stringToken = tokenHandler.WriteToken(token);
