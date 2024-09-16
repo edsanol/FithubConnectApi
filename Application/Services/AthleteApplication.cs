@@ -216,63 +216,63 @@ namespace Application.Services
                     throw new Exception("Error al editar al atleta");
                 }
 
-                var existCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(athleteEdit.CardAccesses.Last().CardNumber);
+                //var existCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(athleteEdit.CardAccesses.Last().CardNumber);
 
-                if (existCardAccess != null && existCardAccess.Status == true && existCardAccess.IdAthlete != athleteID)
-                {
-                    throw new Exception("El código de acceso ya se encuentra registrado");
-                }
+                //if (existCardAccess != null && existCardAccess.Status == true && existCardAccess.IdAthlete != athleteID)
+                //{
+                //    throw new Exception("El código de acceso ya se encuentra registrado");
+                //}
 
-                var existNewCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(athleteDto.CardAccessCode);
+                //var existNewCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(athleteDto.CardAccessCode);
 
-                if (existNewCardAccess != null && existNewCardAccess.Status == true && existNewCardAccess.IdAthlete != athleteID)
-                {
-                    throw new Exception("El código de acceso ya se encuentra registrado");
-                }
+                //if (existNewCardAccess != null && existNewCardAccess.Status == true && existNewCardAccess.IdAthlete != athleteID)
+                //{
+                //    throw new Exception("El código de acceso ya se encuentra registrado");
+                //}
 
-                if (existCardAccess != null && existCardAccess.CardNumber != athleteDto.CardAccessCode)
-                {
-                    var updateCardAccess = existCardAccess;
-                    updateCardAccess.Status = false;
+                //if (existCardAccess != null && existCardAccess.CardNumber != athleteDto.CardAccessCode)
+                //{
+                //    var updateCardAccess = existCardAccess;
+                //    updateCardAccess.Status = false;
 
-                    var resultUpdateCardAccess = await _unitOfWork.CardAccessRepository.UnregisterCardAccess(updateCardAccess);
+                //    var resultUpdateCardAccess = await _unitOfWork.CardAccessRepository.UnregisterCardAccess(updateCardAccess);
 
-                    if (!resultUpdateCardAccess)
-                    {
-                        throw new Exception("Error al actualizar el código de acceso");
-                    }
+                //    if (!resultUpdateCardAccess)
+                //    {
+                //        throw new Exception("Error al actualizar el código de acceso");
+                //    }
 
-                    var newCardAccess = new CardAccess
-                    {
-                        IdAthlete = athlete.AthleteId,
-                        CardNumber = athleteDto.CardAccessCode,
-                        ExpirationDate = null,
-                        Status = true,
-                    };
+                //    var newCardAccess = new CardAccess
+                //    {
+                //        IdAthlete = athlete.AthleteId,
+                //        CardNumber = athleteDto.CardAccessCode,
+                //        ExpirationDate = null,
+                //        Status = true,
+                //    };
 
-                    var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(newCardAccess);
-                    if (!resultCardAccess)
-                    {
-                        throw new Exception("Error al registrar el código de acceso");
-                    }
-                }
+                //    var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(newCardAccess);
+                //    if (!resultCardAccess)
+                //    {
+                //        throw new Exception("Error al registrar el código de acceso");
+                //    }
+                //}
 
-                if (existCardAccess is null)
-                {
-                    var newCardAccess = new CardAccess
-                    {
-                        IdAthlete = athlete.AthleteId,
-                        CardNumber = athleteDto.CardAccessCode,
-                        ExpirationDate = null,
-                        Status = true,
-                    };
+                //if (existCardAccess is null)
+                //{
+                //    var newCardAccess = new CardAccess
+                //    {
+                //        IdAthlete = athlete.AthleteId,
+                //        CardNumber = athleteDto.CardAccessCode,
+                //        ExpirationDate = null,
+                //        Status = true,
+                //    };
 
-                    var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(newCardAccess);
-                    if (!resultCardAccess)
-                    {
-                        throw new Exception("Error al registrar el código de acceso");
-                    }
-                }
+                //    var resultCardAccess = await _unitOfWork.CardAccessRepository.RegisterCardAccess(newCardAccess);
+                //    if (!resultCardAccess)
+                //    {
+                //        throw new Exception("Error al registrar el código de acceso");
+                //    }
+                //}
 
                 transaction.Commit();
 
