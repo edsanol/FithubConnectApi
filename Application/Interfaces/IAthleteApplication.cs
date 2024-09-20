@@ -1,6 +1,7 @@
 ﻿using Application.Commons.Bases;
 using Application.Dtos.Request;
 using Application.Dtos.Response;
+using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 
@@ -27,5 +28,6 @@ namespace Application.Interfaces
         Task<BaseResponse<ContactInformationResponseDto>> GetContactInformation();
         Task<BaseResponse<bool>> RegisterAthleteFingerPrint(FingerprintRequest request);
         Task<BaseResponse<bool>> AccessAthleteFingerPrint(int athleteID);
+        Task<bool> DestroyAthleteFromDB(DestroyAthleteRequestDto request);
     }
 }

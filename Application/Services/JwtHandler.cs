@@ -93,8 +93,7 @@ namespace Application.Services
         private async Task<string> GenerateTokenFunc(Claim[] claims, int expirationTime)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var jwtSecret = Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")
-                ?? _configuration["Jwt:Secret"]!);
+            var jwtSecret = GetJwtSecret();
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -109,13 +108,20 @@ namespace Application.Services
             return stringToken;
         }
 
+        // Método helper para obtener el secreto JWT
+        private byte[] GetJwtSecret()
+        {
+            return Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? _configuration["Jwt:Secret"]!);
+        }
+
         public bool ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!)),
+                IssuerSigningKey = new SymmetricSecurityKey(GetJwtSecret()),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.Zero
@@ -155,15 +161,13 @@ namespace Application.Services
         {
             var userId = string.Empty;
             var result = 0;
-            string jwtKey = _configuration["Jwt:Secret"]!;
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
+                IssuerSigningKey = new SymmetricSecurityKey(GetJwtSecret()),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.Zero
@@ -193,15 +197,13 @@ namespace Application.Services
         public string GetRoleFromRefreshToken(string token)
         {
             var result = string.Empty;
-            string jwtKey = _configuration["Jwt:Secret"]!;
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
+                IssuerSigningKey = new SymmetricSecurityKey(GetJwtSecret()),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.Zero
@@ -245,15 +247,13 @@ namespace Application.Services
         public string GetTokenTypeFromRefreshToken(string token)
         {
             var result = string.Empty;
-            string jwtKey = _configuration["Jwt:Secret"]!;
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
+                IssuerSigningKey = new SymmetricSecurityKey(GetJwtSecret()),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.Zero

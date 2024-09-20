@@ -3,6 +3,7 @@ using Application.Commons.Bases;
 using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Interfaces;
+using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Microsoft.AspNetCore.Authorization;
@@ -252,6 +253,14 @@ namespace Api.Controllers
         public async Task<ActionResult<BaseResponse<bool>>> AccessAthleteFingerPrint([FromQuery] int athleteID)
         {
             var response = await _athleteApplication.AccessAthleteFingerPrint(athleteID);
+
+            return Ok(response);
+        }
+
+        [HttpDelete("DestroyAthleteFromDB")]
+        public async Task<ActionResult<BaseResponse<bool>>> DestroyAthleteFromDB([FromBody] DestroyAthleteRequestDto request)
+        {
+            var response = await _athleteApplication.DestroyAthleteFromDB(request);
 
             return Ok(response);
         }
