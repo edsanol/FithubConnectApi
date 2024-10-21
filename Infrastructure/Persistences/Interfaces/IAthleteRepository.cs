@@ -16,5 +16,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<IEnumerable<DashboardGraphicsResponse>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate);
         Task<bool> RegisterPassword(int athleteID, string password);
         Task<bool> RegisterAthleteFingerPrint(int athleteID, string fingerPrint);
+        Task<bool> DestroyAthleteFromDB(string email);
     }
 }

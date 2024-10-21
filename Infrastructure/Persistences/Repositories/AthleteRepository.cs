@@ -160,6 +160,33 @@ namespace Infrastructure.Persistences.Repositories
             }
         }
 
+        public async Task<bool> DestroyAthleteFromDB(string email)
+        {
+            var athlete = await _context.Athlete.AsNoTracking().SingleOrDefaultAsync(x => x.Email.Equals(email));
+            if (athlete != null)
+            {
+                athlete.AthleteName = "Anonymous";
+                athlete.AthleteLastName = "Anonymous";
+                athlete.BirthDate = DateTime.MinValue;
+                athlete.Email = $"anonymous{athlete.AthleteId}@mail.com";
+                athlete.PhoneNumber = "0000000000";
+                athlete.Genre = "Anonymous";
+                athlete.Password = "Anonymous";
+                athlete.FingerPrint = null;
+                athlete.Status = false;
+                athlete.AuditDeleteDate = DateTime.Now;
+                athlete.AuditDeleteUser = "System";
+                _context.Update(athlete);
+                var recordsAffected = await _context.SaveChangesAsync();
+
+                return recordsAffected > 0;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public async Task<bool> EditAthlete(Athlete athlete)
         {
             _context.Update(athlete);

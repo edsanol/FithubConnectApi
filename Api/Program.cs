@@ -1,4 +1,5 @@
 using Application.Extensions;
+using Domain.Entities.Configuration;
 using Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,12 @@ if (string.IsNullOrEmpty(jwtSecret))
 {
     throw new Exception("JWT Secret is missing or empty.");
 }
+
+// Configurar JwtConfiguration directamente con el valor de jwtSecret
+builder.Services.Configure<JwtConfiguration>(options =>
+{
+    options.Secret = jwtSecret;
+});
 
 builder.Services.AddAuthentication(options =>
 {

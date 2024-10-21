@@ -1095,5 +1095,40 @@ namespace Application.Services
 
             return response;
         }
+
+        public async Task<bool> DestroyAthleteFromDB(DestroyAthleteRequestDto request)
+        {
+            var response = false;
+            IDbContextTransaction? transaction = null;
+
+            try
+            {
+                var athlete = await _unitOfWork.AthleteRepository.LoginAthlete(request.Email) ?? throw new Exception("El atleta no existe");
+
+                transaction = _context.Database.BeginTransaction();
+
+                var result = await _unitOfWork.AthleteRepository.DestroyAthleteFromDB(request.Email);
+
+                if (!result)
+                {
+                    throw new Exception("Error al eliminar al atleta");
+                }
+
+                transaction.Commit();
+
+                response = true;
+            }
+            catch (Exception)
+            {
+                response = false;
+                transaction?.Rollback();
+            }
+            finally
+            {
+                transaction?.Dispose();
+            }
+
+            return response;
+        }
     }
 }
