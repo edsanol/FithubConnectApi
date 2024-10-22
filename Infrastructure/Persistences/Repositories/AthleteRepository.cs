@@ -19,6 +19,9 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<Athlete> AthleteById(int athleteID)
         {
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
             var athlete = await _context.Athlete
                 .Where(x => x.AthleteId.Equals(athleteID))
                 .Select(x => new Athlete
@@ -38,6 +41,7 @@ namespace Infrastructure.Persistences.Repositories
                     AuditUpdateDate = x.AuditUpdateDate,
                     AuditDeleteUser = x.AuditDeleteUser,
                     AuditDeleteDate = x.AuditDeleteDate,
+                    FingerPrint = x.FingerPrint,
                     CardAccesses = x.CardAccesses
                         .Select(ca => new CardAccess
                         {
@@ -69,7 +73,7 @@ namespace Infrastructure.Persistences.Repositories
                                     }).ToList()
                             }
                         })
-                        .Where(am => am.EndDate >= DateOnly.FromDateTime(DateTime.Now))
+                        .Where(am => am.EndDate >= DateOnly.FromDateTime(currentTimeInBogota))
                         .ToList()
                 }).AsNoTracking().SingleOrDefaultAsync();
 
@@ -78,29 +82,31 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<DashboardAthleteResponseDto> DashboardAthletes(int gymID)
         {
-            var currentMonth = DateTime.Now.Month;
-            var currentYear = DateTime.Now.Year;
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+            var currentMonth = currentTimeInBogota.Month;
+            var currentYear = currentTimeInBogota.Year;
 
             // get total athletes
             var totalAthletes = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true)
                 .CountAsync();
 
             // get active athletes
             var activeAthletes = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships
-                .Any(am => am.EndDate >= DateOnly.FromDateTime(DateTime.Now)))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AthleteMemberships
+                .Any(am => am.EndDate >= DateOnly.FromDateTime(currentTimeInBogota)))
                 .CountAsync();
 
             // get inactive athletes
             var inactiveAthletes = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships
-                               .All(am => am.EndDate < DateOnly.FromDateTime(DateTime.Now)))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AthleteMemberships
+                               .All(am => am.EndDate < DateOnly.FromDateTime(currentTimeInBogota)))
                 .CountAsync();
 
             // get daily assistance
             var dailyAssistance = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.AccessLogs.Any(al => al.AccessDateTime.Date == DateTime.Now.Date))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AccessLogs.Any(al => al.AccessDateTime.Date == currentTimeInBogota.Date))
                 .CountAsync();
 
             // get new athletes by month
@@ -110,7 +116,7 @@ namespace Infrastructure.Persistences.Repositories
 
             // get income by month
             var incomeByMonth = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships.Any(am => am.StartDate.Month == currentMonth && am.StartDate.Year == currentYear))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AthleteMemberships.Any(am => am.StartDate.Month == currentMonth && am.StartDate.Year == currentYear))
                 .SumAsync(x => x.AthleteMemberships
                 .Where(am => am.StartDate.Month == currentMonth && am.StartDate.Year == currentYear)
                 .Sum(am => am.IdMembershipNavigation.Cost));
@@ -162,6 +168,9 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<bool> DestroyAthleteFromDB(string email)
         {
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
             var athlete = await _context.Athlete.AsNoTracking().SingleOrDefaultAsync(x => x.Email.Equals(email));
             if (athlete != null)
             {
@@ -174,7 +183,7 @@ namespace Infrastructure.Persistences.Repositories
                 athlete.Password = "Anonymous";
                 athlete.FingerPrint = null;
                 athlete.Status = false;
-                athlete.AuditDeleteDate = DateTime.Now;
+                athlete.AuditDeleteDate = currentTimeInBogota;
                 athlete.AuditDeleteUser = "System";
                 _context.Update(athlete);
                 var recordsAffected = await _context.SaveChangesAsync();
@@ -197,13 +206,18 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<IEnumerable<DashboardGraphicsResponse>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate)
         {
+            var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
+            var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue);
+
             var dailyAssistance = await _context.AccessLog
-                .Where(x => x.IdAthleteNavigation.IdGym.Equals(gymID) && DateOnly.FromDateTime(x.AccessDateTime) >= startDate && DateOnly.FromDateTime(x.AccessDateTime) <= endDate)
+                .Where(x => x.IdAthleteNavigation.IdGym == gymID
+                    && x.AccessDateTime >= startDateTime
+                    && x.AccessDateTime <= endDateTime)
                 .GroupBy(x => x.AccessDateTime.Date)
-                .Select(x => new DashboardGraphicsResponse
+                .Select(g => new DashboardGraphicsResponse
                 {
-                    Time = DateOnly.FromDateTime(x.Key),
-                    Value = x.Count()
+                    Time = DateOnly.FromDateTime(g.Key),
+                    Value = g.Select(x => x.IdAthlete).Distinct().Count()
                 })
                 .ToListAsync();
 
@@ -213,6 +227,8 @@ namespace Infrastructure.Persistences.Repositories
         public async Task<BaseEntityResponse<Athlete>> ListAthlete(BaseFiltersRequest filters, int gymID)
         {
             var response = new BaseEntityResponse<Athlete>();
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
 
             var athletes = _context.Athlete
                 .Include(x => x.IdGymNavigation)
@@ -281,7 +297,7 @@ namespace Infrastructure.Persistences.Repositories
                         {
                             athletes = athletes.Where(x => x.IdGym.Equals(gymID) &&
                                 x.AthleteMemberships.Any(am => !string.IsNullOrEmpty(am.IdMembershipNavigation.MembershipName) &&
-                                    am.EndDate >= DateOnly.FromDateTime(DateTime.Now))
+                                    am.EndDate >= DateOnly.FromDateTime(currentTimeInBogota))
                             );
                         }
                         else
@@ -291,7 +307,7 @@ namespace Infrastructure.Persistences.Repositories
 
                             athletes = athletes.Where(x => x.IdGym.Equals(gymID) &&
                                 x.AthleteMemberships.Any(am => !string.IsNullOrEmpty(am.IdMembershipNavigation.MembershipName) &&
-                                    am.EndDate >= DateOnly.FromDateTime(DateTime.Now)) &&
+                                    am.EndDate >= DateOnly.FromDateTime(currentTimeInBogota)) &&
                                 !excludedAthleteIds.Contains(x.AthleteId) ||
                                 (excludedAthleteIds.Contains(x.AthleteId) && x.AuditUpdateDate > endDate));
                         }
@@ -376,11 +392,13 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<bool> RegisterAthleteFingerPrint(int athleteID, string fingerPrint)
         {
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
             var athlete = await _context.Athlete.AsNoTracking().SingleOrDefaultAsync(x => x.AthleteId.Equals(athleteID));
             if (athlete != null)
             {
                 athlete.FingerPrint = fingerPrint;
-                athlete.AuditUpdateDate = DateTime.Now;
+                athlete.AuditUpdateDate = currentTimeInBogota;
                 athlete.AuditUpdateUser = "System";
                 _context.Update(athlete);
                 var recordsAffected = await _context.SaveChangesAsync();

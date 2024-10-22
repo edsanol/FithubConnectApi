@@ -40,6 +40,8 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<bool> DiscountExists(int membershipID)
         {
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
             var discounts = (from c in _context.Discounts
                              select c).AsNoTracking().AsQueryable();
 
@@ -49,7 +51,7 @@ namespace Infrastructure.Persistences.Repositories
 
             foreach (var item in discount)
             {
-                if (Convert.ToDateTime(item.EndDate) >= DateTime.Now)
+                if (Convert.ToDateTime(item.EndDate) >= currentTimeInBogota)
                     return true;
             }
 

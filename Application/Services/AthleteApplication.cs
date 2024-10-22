@@ -80,6 +80,8 @@ namespace Application.Services
             try
             {
                 var existCardAccess = await _unitOfWork.CardAccessRepository.GetAccessCardByCode(accessAthleteDto);
+                var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+                var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
 
                 if (existCardAccess is null || existCardAccess.Status == false)
                 {
@@ -93,7 +95,7 @@ namespace Application.Services
                     throw new Exception("El atleta no existe");
                 }
 
-                if (athlete.Data.EndDate < DateOnly.FromDateTime(DateTime.Now))
+                if (athlete.Data.EndDate < DateOnly.FromDateTime(currentTimeInBogota))
                 {
                     throw new Exception("El atleta no cuenta con una membresía activa");
                 }
@@ -104,7 +106,7 @@ namespace Application.Services
                 {
                     IdAthlete = athlete.Data.AthleteId,
                     IdCard = existCardAccess.CardId,
-                    AccessDateTime = DateTime.Now,
+                    AccessDateTime = currentTimeInBogota,
                     IdGym = athlete.Data.IdGym,
                     AccessType = 1
                 };
@@ -202,12 +204,16 @@ namespace Application.Services
                 var athleteEdit = await _unitOfWork.AthleteRepository.AthleteById(athleteID) ?? throw new Exception("El atleta no existe");
                 transaction = _context.Database.BeginTransaction();
 
+                var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+                var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
                 var athlete = _mapper.Map<Athlete>(athleteDto);
                 athlete.AthleteId = athleteEdit.AthleteId;
                 athlete.IdGym = athleteEdit.IdGym;
+                athlete.FingerPrint = athleteEdit.FingerPrint;
                 athlete.AuditCreateDate = athleteEdit.AuditCreateDate;
                 athlete.AuditCreateUser = athleteEdit.AuditCreateUser;
-                athlete.AuditUpdateDate = DateTime.Now;
+                athlete.AuditUpdateDate = currentTimeInBogota;
                 athlete.AuditUpdateUser = gym.GymName;
                 response.Data = await _unitOfWork.AthleteRepository.EditAthlete(athlete);
 
@@ -484,8 +490,11 @@ namespace Application.Services
                 return response;
             }
 
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
             var measurementProgress = _mapper.Map<MeasurementsProgress>(measurementProgressDto);
-            measurementProgress.Date = DateOnly.FromDateTime(DateTime.Now);
+            measurementProgress.Date = DateOnly.FromDateTime(currentTimeInBogota);
 
             response.Data = await _unitOfWork.MeasurementProgressRepository.RecordMeasurementProgress(measurementProgress);
 
@@ -531,9 +540,12 @@ namespace Application.Services
                     throw new Exception("Error al validar los datos");
                 }
 
+                var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+                var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
                 transaction = _context.Database.BeginTransaction();
                 var athlete = _mapper.Map<Athlete>(athleteDto);
-                athlete.AuditCreateDate = DateTime.Now;
+                athlete.AuditCreateDate = currentTimeInBogota;
                 athlete.AuditCreateUser = gym.GymName;
                 athlete.IdGym = gym.GymId;
 
@@ -549,8 +561,8 @@ namespace Application.Services
                 {
                     IdAthlete = athlete.AthleteId,
                     IdMembership = athleteDto.MembershipId,
-                    StartDate = DateOnly.FromDateTime(DateTime.Now),
-                    EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(membershiptDuration.DurationInDays)),
+                    StartDate = DateOnly.FromDateTime(currentTimeInBogota),
+                    EndDate = DateOnly.FromDateTime(currentTimeInBogota.AddDays(membershiptDuration.DurationInDays)),
                 };
 
                 var resultAthleteMembership = await _unitOfWork.AthleteMembershipRepository.RegisterAthleteMembership(athleteMembership);
@@ -733,12 +745,15 @@ namespace Application.Services
             {
                 var athleteEdit = await AthleteById(membershipToAthleteDto.AthleteId);
 
+                var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+                var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
                 if (athleteEdit.Data is null)
                 {
                     throw new Exception("El atleta no existe");
                 }
 
-                if (athleteEdit.Data.EndDate > DateOnly.FromDateTime(DateTime.Now))
+                if (athleteEdit.Data.EndDate > DateOnly.FromDateTime(currentTimeInBogota))
                 {
                     throw new Exception("El atleta ya cuenta con una membresía activa");
                 }
@@ -750,8 +765,8 @@ namespace Application.Services
                 {
                     IdAthlete = membershipToAthleteDto.AthleteId,
                     IdMembership = membershipToAthleteDto.MembershipId,
-                    StartDate = DateOnly.FromDateTime(DateTime.Now),
-                    EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(membershiptDuration.DurationInDays)),
+                    StartDate = DateOnly.FromDateTime(currentTimeInBogota),
+                    EndDate = DateOnly.FromDateTime(currentTimeInBogota.AddDays(membershiptDuration.DurationInDays)),
                 };
 
                 var resultAthleteMembership = await _unitOfWork.AthleteMembershipRepository.RegisterAthleteMembership(athleteMembership);
@@ -928,9 +943,12 @@ namespace Application.Services
                 var athleteEdit = await _unitOfWork.AthleteRepository.AthleteById(athleteID) ?? throw new Exception("El atleta no existe");
                 transaction = _context.Database.BeginTransaction();
 
+                var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+                var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
                 var athlete = _mapper.Map<Athlete>(athleteDto);
                 athlete.AthleteId = athleteID;
-                athlete.AuditUpdateDate = DateTime.Now;
+                athlete.AuditUpdateDate = currentTimeInBogota;
                 athlete.AuditUpdateUser = Convert.ToString("Athlete" + athleteID);
                 athlete.AuditCreateDate = athleteEdit.AuditCreateDate;
                 athlete.AuditCreateUser = athleteEdit.AuditCreateUser;
@@ -1069,11 +1087,14 @@ namespace Application.Services
                 }
             }
 
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
             var access = new AccessLog
             {
                 IdAthlete = athleteID,
                 IdCard = null,
-                AccessDateTime = DateTime.Now,
+                AccessDateTime = currentTimeInBogota,
                 IdGym = userID,
                 AccessType = 2
             };

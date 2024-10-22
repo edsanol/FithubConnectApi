@@ -30,12 +30,14 @@ namespace Api.Controllers
         [HttpGet("GetDailyAssistanceGraphic")]
         public async Task<ActionResult<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>>> GetDailyAssistanceGraphic([FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
         {
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
             // if startDate and endDate are not provided, set them to today
             if (startDate == default)
-                startDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-30));
+                startDate = DateOnly.FromDateTime(currentTimeInBogota.AddDays(-30));
 
             if (endDate == default)
-                endDate = DateOnly.FromDateTime(DateTime.Now);
+                endDate = DateOnly.FromDateTime(currentTimeInBogota);
 
             var response = await _dashboardApplication.GetDailyAssistanceGraphic(startDate, endDate);
 
@@ -45,12 +47,14 @@ namespace Api.Controllers
         [HttpGet("GetIncomeGraphic")]
         public async Task<ActionResult<BaseResponse<IEnumerable<DashboardGraphicsResponseDto>>>> GetIncomeGraphic([FromQuery] DateOnly startDate, [FromQuery] DateOnly endDate)
         {
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
             // if startDate and endDate are not provided, set them to today
             if (startDate == default)
-                startDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-30));
+                startDate = DateOnly.FromDateTime(currentTimeInBogota.AddDays(-30));
 
             if (endDate == default)
-                endDate = DateOnly.FromDateTime(DateTime.Now);
+                endDate = DateOnly.FromDateTime(currentTimeInBogota);
 
             var response = await _dashboardApplication.GetIncomeGraphic(startDate, endDate);
 

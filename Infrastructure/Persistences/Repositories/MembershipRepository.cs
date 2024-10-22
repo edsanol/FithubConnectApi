@@ -48,8 +48,11 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<int> GetAthletesByMembership(int membershipID)
         {
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
             var athletes = await _context.AthleteMemberships
-                .Where(x => x.IdMembership.Equals(membershipID) && x.EndDate > DateOnly.FromDateTime(DateTime.Now))
+                .Where(x => x.IdMembership.Equals(membershipID) && x.EndDate > DateOnly.FromDateTime(currentTimeInBogota))
                 .CountAsync();
 
             return athletes;
@@ -74,7 +77,7 @@ namespace Infrastructure.Persistences.Repositories
                             DiscountId = d.DiscountId,
                             DiscountPercentage = d.DiscountPercentage,
                             IdMembership = d.IdMembership,
-                            StartDate= d.StartDate,
+                            StartDate = d.StartDate,
                             EndDate = d.EndDate,
                             Comments = d.Comments,
                         }).ToList()
@@ -137,9 +140,12 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<IEnumerable<DashboardPieResponseDto>> MembershipPercentage(int gymID)
         {
+            var timeZoneBogota = TimeZoneInfo.FindSystemTimeZoneById("America/Bogota");
+            var currentTimeInBogota = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, timeZoneBogota);
+
             // get the total number of athletes
             var totalAthletes = await _context.AthleteMemberships
-                .Where(x => x.IdAthleteNavigation.IdGym.Equals(gymID) && x.EndDate >= DateOnly.FromDateTime(DateTime.Now))
+                .Where(x => x.IdAthleteNavigation.IdGym.Equals(gymID) && x.EndDate >= DateOnly.FromDateTime(currentTimeInBogota))
                 .CountAsync();
 
             // get the number of athletes by membership
@@ -149,7 +155,7 @@ namespace Infrastructure.Persistences.Repositories
                 {
                     Label = x.MembershipName,
                     Value = _context.AthleteMemberships
-                        .Where(am => am.IdMembership.Equals(x.MembershipId) && am.EndDate >= DateOnly.FromDateTime(DateTime.Now))
+                        .Where(am => am.IdMembership.Equals(x.MembershipId) && am.EndDate >= DateOnly.FromDateTime(currentTimeInBogota))
                         .Count()
                 }).ToListAsync();
 
