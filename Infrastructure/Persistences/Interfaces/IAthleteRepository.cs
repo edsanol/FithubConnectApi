@@ -17,5 +17,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<bool> RegisterPassword(int athleteID, string password);
         Task<bool> RegisterAthleteFingerPrint(int athleteID, string fingerPrint);
         Task<bool> DestroyAthleteFromDB(string email);
+        Task<IEnumerable<AthleteBirthDateDto>> GetAthleteBirthDate(int gymID);
     }
 }

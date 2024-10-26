@@ -205,6 +205,7 @@ namespace Application.Services
                 var athlete = _mapper.Map<Athlete>(athleteDto);
                 athlete.AthleteId = athleteEdit.AthleteId;
                 athlete.IdGym = athleteEdit.IdGym;
+                athlete.Password = athleteEdit.Password;
                 athlete.AuditCreateDate = athleteEdit.AuditCreateDate;
                 athlete.AuditCreateUser = athleteEdit.AuditCreateUser;
                 athlete.AuditUpdateDate = DateTime.Now;
