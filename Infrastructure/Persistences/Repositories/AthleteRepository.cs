@@ -4,7 +4,6 @@ using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Infrastructure.Persistences.Repositories
 {
@@ -38,6 +37,7 @@ namespace Infrastructure.Persistences.Repositories
                     AuditUpdateDate = x.AuditUpdateDate,
                     AuditDeleteUser = x.AuditDeleteUser,
                     AuditDeleteDate = x.AuditDeleteDate,
+                    FingerPrint = x.FingerPrint,
                     CardAccesses = x.CardAccesses
                         .Select(ca => new CardAccess
                         {
@@ -83,24 +83,24 @@ namespace Infrastructure.Persistences.Repositories
 
             // get total athletes
             var totalAthletes = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true)
                 .CountAsync();
 
             // get active athletes
             var activeAthletes = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AthleteMemberships
                 .Any(am => am.EndDate >= DateOnly.FromDateTime(DateTime.Now)))
                 .CountAsync();
 
             // get inactive athletes
             var inactiveAthletes = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AthleteMemberships
                                .All(am => am.EndDate < DateOnly.FromDateTime(DateTime.Now)))
                 .CountAsync();
 
             // get daily assistance
             var dailyAssistance = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.AccessLogs.Any(al => al.AccessDateTime.Date == DateTime.Now.Date))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AccessLogs.Any(al => al.AccessDateTime.Date == DateTime.Now.Date))
                 .CountAsync();
 
             // get new athletes by month
@@ -110,7 +110,7 @@ namespace Infrastructure.Persistences.Repositories
 
             // get income by month
             var incomeByMonth = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.AthleteMemberships.Any(am => am.StartDate.Month == currentMonth && am.StartDate.Year == currentYear))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AthleteMemberships.Any(am => am.StartDate.Month == currentMonth && am.StartDate.Year == currentYear))
                 .SumAsync(x => x.AthleteMemberships
                 .Where(am => am.StartDate.Month == currentMonth && am.StartDate.Year == currentYear)
                 .Sum(am => am.IdMembershipNavigation.Cost));
@@ -195,15 +195,40 @@ namespace Infrastructure.Persistences.Repositories
             return recordsAffected > 0;
         }
 
+        public async Task<IEnumerable<AthleteBirthDateDto>> GetAthleteBirthDate(int gymID)
+        {
+            var currentMonth = DateTime.Now.Month;
+            var currentYear = DateTime.Now.Year;
+
+            var athletes = await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.BirthDate.Month == currentMonth)
+                .Select(x => new AthleteBirthDateDto
+                {
+                    AthleteId = x.AthleteId,
+                    AthleteName = x.AthleteName,
+                    AthleteLastName = x.AthleteLastName,
+                    BirthDate = DateOnly.FromDateTime(x.BirthDate),
+                    Age = currentYear - x.BirthDate.Year
+                })
+                .ToListAsync();
+
+            return athletes;
+        }
+
         public async Task<IEnumerable<DashboardGraphicsResponse>> GetDailyAssistance(int gymID, DateOnly startDate, DateOnly endDate)
         {
+            var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
+            var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue);
+
             var dailyAssistance = await _context.AccessLog
-                .Where(x => x.IdAthleteNavigation.IdGym.Equals(gymID) && DateOnly.FromDateTime(x.AccessDateTime) >= startDate && DateOnly.FromDateTime(x.AccessDateTime) <= endDate)
+                .Where(x => x.IdAthleteNavigation.IdGym == gymID
+                    && x.AccessDateTime >= startDateTime
+                    && x.AccessDateTime <= endDateTime)
                 .GroupBy(x => x.AccessDateTime.Date)
-                .Select(x => new DashboardGraphicsResponse
+                .Select(g => new DashboardGraphicsResponse
                 {
-                    Time = DateOnly.FromDateTime(x.Key),
-                    Value = x.Count()
+                    Time = DateOnly.FromDateTime(g.Key),
+                    Value = g.Select(x => x.IdAthlete).Distinct().Count()
                 })
                 .ToListAsync();
 

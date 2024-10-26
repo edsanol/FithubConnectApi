@@ -1,6 +1,9 @@
 ﻿using Application.Commons.Bases;
 using Application.Dtos.Response;
 using Application.Interfaces;
+using Application.Services;
+using Infrastructure.Commons.Bases.Request;
+using Infrastructure.Commons.Bases.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +23,7 @@ namespace Api.Controllers
         }
 
         [HttpGet("GetDashboard")]
-        public async Task<ActionResult<BaseResponse<DashboardAthleteResponseDto>>> GetDashboard()
+        public async Task<ActionResult<BaseResponse<Application.Dtos.Response.DashboardAthleteResponseDto>>> GetDashboard()
         {
             var response = await _dashboardApplication.GetDashboard();
 
@@ -58,9 +61,25 @@ namespace Api.Controllers
         }
 
         [HttpGet("GetMembershipGraphic")]
-        public async Task<ActionResult<BaseResponse<IEnumerable<DashboardPieResponseDto>>>> GetMembershipPercentage()
+        public async Task<ActionResult<BaseResponse<IEnumerable<Application.Dtos.Response.DashboardPieResponseDto>>>> GetMembershipPercentage()
         {
             var response = await _dashboardApplication.GetMembershipPercentage();
+
+            return Ok(response);
+        }
+
+        [HttpPost("GetAthleteAssitance")]
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<Application.Dtos.Response.AthleteAssistenceDto>>>> GetAthleteAssitance([FromBody] BaseFiltersRequest filters)
+        {
+            var response = await _dashboardApplication.GetAthleteAssitance(filters);
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetAthleteBirthDate")]
+        public async Task<ActionResult<BaseResponse<IEnumerable<Application.Dtos.Response.AthleteBirthDateDto>>>> GetAthleteBirthDate()
+        {
+            var response = await _dashboardApplication.GetAthleteBirthDate();
 
             return Ok(response);
         }
