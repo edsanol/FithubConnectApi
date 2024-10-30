@@ -550,8 +550,8 @@ namespace Application.Services
                 {
                     IdAthlete = athlete.AthleteId,
                     IdMembership = athleteDto.MembershipId,
-                    StartDate = DateOnly.FromDateTime(DateTime.Now),
-                    EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(membershiptDuration.DurationInDays)),
+                    StartDate = athleteDto?.StartMembershipDate ?? DateOnly.FromDateTime(DateTime.Now),
+                    EndDate = athleteDto?.StartMembershipDate?.AddDays(membershiptDuration.DurationInDays) ?? DateOnly.FromDateTime(DateTime.Now.AddDays(membershiptDuration.DurationInDays)),
                 };
 
                 var resultAthleteMembership = await _unitOfWork.AthleteMembershipRepository.RegisterAthleteMembership(athleteMembership);
