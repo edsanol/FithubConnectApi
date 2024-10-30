@@ -11,6 +11,7 @@
         public string Password { get; set; } = string.Empty;
         public bool? Status { get; set; } = true;
         public int MembershipId { get; set; }
+        public DateOnly? StartMembershipDate { get; set; }
         public string? CardAccessCode { get; set; } = string.Empty;
     }
 }
