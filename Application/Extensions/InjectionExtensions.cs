@@ -27,6 +27,7 @@ namespace Application.Extensions
             services.AddScoped<IEmailServiceApplication, EmailServiceApplication>();
             services.AddScoped<IJwtHandler, JwtHandler>();
             services.AddScoped<IDashboardApplication, DashboardApplication>();
+            services.AddScoped<IInventoryProductsApplication, InventoryProductsApplication>();
 
             return services;
         }

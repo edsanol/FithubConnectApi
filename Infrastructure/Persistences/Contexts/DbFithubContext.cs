@@ -48,6 +48,20 @@ public partial class DbFithubContext : DbContext
 
     public virtual DbSet<GymToken> GymToken { get; set; }
 
+    public virtual DbSet<ProductsCategory> ProductsCategory { get; set; }
+
+    public virtual DbSet<Products> Products { get; set; }
+
+    public virtual DbSet<ProductsVariant> ProductsVariant { get; set; }
+
+    public virtual DbSet<Orders> Orders { get; set; }
+
+    public virtual DbSet<OrderDetails> OrderDetails { get; set; }
+
+    public virtual DbSet<StockMovements> StockMovements { get; set; }
+
+    public virtual DbSet<Payments> Payments { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasAnnotation("Relational:Collation", "Modern_Spanish_CI_AS");

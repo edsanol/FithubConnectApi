@@ -15,6 +15,10 @@
         IContactInformationRepository ContactInformationRepository { get; }
         IAthleteTokenRepository AthleteTokenRepository { get; }
         IGymTokenRepository GymTokenRepository { get; }
+        IProductsCategoryRepository ProductsCategoryRepository { get; }
+        IProductsRepository ProductsRepository { get; }
+        IProductsVariantRepository ProductsVariantRepository { get; }
+        IStockMovementsRepository StockMovementsRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();
