@@ -29,6 +29,14 @@ namespace Infrastructure.Persistences.Repositories
 
         public IGymTokenRepository GymTokenRepository { get; private set; }
 
+        public IProductsCategoryRepository ProductsCategoryRepository { get; private set; }
+
+        public IProductsRepository ProductsRepository { get; private set; }
+
+        public IProductsVariantRepository ProductsVariantRepository { get; private set; }
+
+        public IStockMovementsRepository StockMovementsRepository { get; private set; }
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -43,6 +51,10 @@ namespace Infrastructure.Persistences.Repositories
             ContactInformationRepository = new ContactInformationRepository(_context) ?? throw new ArgumentNullException(nameof(ContactInformationRepository));
             AthleteTokenRepository = new AthleteTokenRepository(_context) ?? throw new ArgumentNullException(nameof(AthleteTokenRepository));
             GymTokenRepository = new GymTokenRepository(_context) ?? throw new ArgumentNullException(nameof(GymTokenRepository));
+            ProductsCategoryRepository = new ProductsCategoryRepository(_context) ?? throw new ArgumentNullException(nameof(ProductsCategoryRepository));
+            ProductsRepository = new ProductsRepository(_context) ?? throw new ArgumentNullException(nameof(ProductsRepository));
+            ProductsVariantRepository = new ProductsVariantRepository(_context) ?? throw new ArgumentNullException(nameof(ProductsVariantRepository));
+            StockMovementsRepository = new StockMovementsRepository(_context) ?? throw new ArgumentNullException(nameof(StockMovementsRepository));
         }
 
         public void Dispose()
