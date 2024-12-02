@@ -134,7 +134,7 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [Authorize]
+        // [Authorize]
         [HttpGet("AccessTypes")]
         public async Task<ActionResult<BaseResponse<IEnumerable<AccessTypeResponseDto>>>> ListAccessTypes()
         {
