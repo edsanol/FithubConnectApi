@@ -250,9 +250,9 @@ namespace Api.Controllers
 
         [Authorize]
         [HttpGet("AccessAthleteFingerPrint")]
-        public async Task<ActionResult<BaseResponse<bool>>> AccessAthleteFingerPrint([FromQuery] int athleteID)
+        public async Task<ActionResult<BaseResponse<bool>>> AccessAthleteFingerPrint([FromQuery] int athleteID, int? accessType)
         {
-            var response = await _athleteApplication.AccessAthleteFingerPrint(athleteID);
+            var response = await _athleteApplication.AccessAthleteFingerPrint(athleteID, accessType);
 
             return Ok(response);
         }

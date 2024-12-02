@@ -1046,11 +1046,12 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<bool>> AccessAthleteFingerPrint(int athleteID)
+        public async Task<BaseResponse<bool>> AccessAthleteFingerPrint(int athleteID, int? accessType)
         {
             var response = new BaseResponse<bool>();
             var userID = _jwtHandler.ExtractIdFromToken();
             string role = _jwtHandler.GetRoleFromToken();
+            int accessTypeValue = accessType ?? 1;
 
             if (role != "gimnasio")
             {
@@ -1076,7 +1077,7 @@ namespace Application.Services
                 IdCard = null,
                 AccessDateTime = DateTime.Now,
                 IdGym = userID,
-                AccessType = 2
+                AccessType = accessTypeValue
             };
 
             var resultAccess = await _unitOfWork.AccessLogRepository.RegisterAccessLog(access);

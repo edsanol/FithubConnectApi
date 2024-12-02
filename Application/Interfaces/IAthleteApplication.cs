@@ -27,7 +27,7 @@ namespace Application.Interfaces
         Task<BaseResponse<AthleteResponseDto>> RefreshAuthToken(string refreshToken);
         Task<BaseResponse<ContactInformationResponseDto>> GetContactInformation();
         Task<BaseResponse<bool>> RegisterAthleteFingerPrint(FingerprintRequest request);
-        Task<BaseResponse<bool>> AccessAthleteFingerPrint(int athleteID);
+        Task<BaseResponse<bool>> AccessAthleteFingerPrint(int athleteID, int? accessType);
         Task<bool> DestroyAthleteFromDB(DestroyAthleteRequestDto request);
     }
 }
