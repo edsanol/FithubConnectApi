@@ -67,10 +67,22 @@ namespace Api.Controllers
         }
 
         [Authorize]
-        [HttpPut("EditProduct/{productId:int}")]
-        public async Task<ActionResult<BaseResponse<bool>>> EditProduct(int productId, [FromBody] EditProductRequestDto request)
+        [HttpGet("GetProductById/{productId:int}")]
+        public async Task<ActionResult<BaseResponse<ProductsResponseDto>>> GetProductById(int productId)
         {
-            var response = await _inventoryProductsApplication.EditProduct(productId, request);
+            var response = await _inventoryProductsApplication.GetProductById(productId);
+
+            if (response.IsSuccess == false)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPut("EditProduct/{variantId:int}")]
+        public async Task<ActionResult<BaseResponse<bool>>> EditProduct(int variantId, [FromBody] EditProductRequestDto request)
+        {
+            var response = await _inventoryProductsApplication.EditProduct(variantId, request);
 
             if (response.IsSuccess == false && response.Message == "No autorizado")
                 return Unauthorized(response);

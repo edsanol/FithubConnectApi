@@ -18,8 +18,6 @@ namespace Infrastructure.Persistences.Contexts.Configurations
 
             builder.Property(e => e.UnitPrice).HasColumnType("numeric");
 
-            builder.Property(e => e.TotalPrice).HasColumnType("numeric");
-
             builder.Property(e => e.ReturnQuantity).HasDefaultValueSql("0");
 
             builder.HasOne(d => d.Order).WithMany(p => p.OrderDetails)

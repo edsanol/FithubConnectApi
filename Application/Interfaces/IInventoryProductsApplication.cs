@@ -12,6 +12,7 @@ namespace Application.Interfaces
         Task<BaseResponse<IEnumerable<CategoryProductsResponseDto>>> GetAllCategoriesProducts();
         Task<BaseResponse<bool>> RegisterProduct(ProductsRequestDto request);
         Task<BaseResponse<BaseEntityResponse<ProductsResponseDto>>> GetAllProducts(BaseFiltersRequest filters);
+        Task<BaseResponse<ProductsResponseDto>> GetProductById(int productId);
         Task<BaseResponse<bool>> EditProduct(int productId, EditProductRequestDto request);
         Task<BaseResponse<bool>> DeleteProduct(int productId);
         Task<BaseResponse<bool>> RegisterEntryAndExitProduct(EntryAndExitProductRequestDto request);

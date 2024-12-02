@@ -41,4 +41,6 @@ public partial class Gym
     public virtual ICollection<Products> Products { get; set; } = new List<Products>();
 
     public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
+
+    public virtual ICollection<GymAccessType> GymAccessTypes { get; set; } = new List<GymAccessType>();
 }

@@ -133,5 +133,14 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [Authorize]
+        [HttpGet("AccessTypes")]
+        public async Task<ActionResult<BaseResponse<IEnumerable<AccessTypeResponseDto>>>> ListAccessTypes()
+        {
+            var response = await _gymApplication.ListAccessTypes();
+
+            return Ok(response);
+        }
     }
 }

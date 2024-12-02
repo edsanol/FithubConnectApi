@@ -19,6 +19,9 @@
         IProductsRepository ProductsRepository { get; }
         IProductsVariantRepository ProductsVariantRepository { get; }
         IStockMovementsRepository StockMovementsRepository { get; }
+        IOrdersPaymentsRepository OrdersPaymentsRepository { get; }
+        IAccessTypeRepository AccessTypeRepository { get; }
+        IGymAccessTypeRepository GymAccessTypeRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();

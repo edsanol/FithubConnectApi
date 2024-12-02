@@ -38,6 +38,7 @@ namespace Infrastructure.Persistences.Repositories
                     AuditDeleteUser = x.AuditDeleteUser,
                     AuditDeleteDate = x.AuditDeleteDate,
                     FingerPrint = x.FingerPrint,
+                    DocumentID = x.DocumentID,
                     CardAccesses = x.CardAccesses
                         .Select(ca => new CardAccess
                         {
@@ -260,6 +261,7 @@ namespace Infrastructure.Persistences.Repositories
                     AuditDeleteUser = x.AuditDeleteUser,
                     AuditDeleteDate = x.AuditDeleteDate,
                     FingerPrint = x.FingerPrint,
+                    DocumentID = x.DocumentID,
                     CardAccesses = x.CardAccesses
                         .Select(ca => new CardAccess
                         {
