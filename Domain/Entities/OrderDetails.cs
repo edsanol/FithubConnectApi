@@ -12,8 +12,6 @@
 
         public decimal UnitPrice { get; set; }
 
-        public decimal TotalPrice { get; set; }
-
         public int ReturnQuantity { get; set; }
 
         public virtual Orders Order { get; set; } = null!;

@@ -19,5 +19,6 @@ namespace Application.Interfaces
         Task<BaseResponse<bool>> RecoverPassword(RecoverPasswordRequestDto request);
         Task<BaseResponse<bool>> ResetPassword(PasswordResetRequestDto request);
         Task<BaseResponse<bool>> ChangePassword(ChangePasswordRequestDto request);
+        Task<BaseResponse<IEnumerable<AccessTypeResponseDto>>> ListAccessTypes();
     }
 }

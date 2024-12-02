@@ -13,5 +13,6 @@
         public int MembershipId { get; set; }
         public DateOnly? StartMembershipDate { get; set; }
         public string? CardAccessCode { get; set; } = string.Empty;
+        public string? DocumentID { get; set; }
     }
 }

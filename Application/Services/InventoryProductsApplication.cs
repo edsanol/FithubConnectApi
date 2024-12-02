@@ -242,6 +242,36 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<BaseResponse<ProductsResponseDto>> GetProductById(int productId)
+        {
+            var response = new BaseResponse<ProductsResponseDto>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            try
+            {
+                var product = await _unitOfWork.ProductsRepository.GetProductById(productId, gymID) ?? throw new Exception("Error al obtener el producto");
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<ProductsResponseDto>(product);
+                response.Message = ReplyMessage.MESSAGE_QUERY;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+
         public async Task<BaseResponse<bool>> RegisterCategoryProduct(CategoryProductsRequestDto request)
         {
             var response = new BaseResponse<bool>();
@@ -310,62 +340,7 @@ namespace Application.Services
 
             try
             {
-                transaction = _context.Database.BeginTransaction();
-                var product = await _unitOfWork.ProductsRepository.GetProductById(request.ProductId, gymID) ?? throw new Exception("Error al obtener el producto");
-
-                if (product.IdGym != gymID)
-                {
-                    response.IsSuccess = false;
-                    response.Message = "No autorizado";
-                    return response;
-                }
-
-                var productVariant = await _unitOfWork.ProductsVariantRepository.GetProductVariantByProductId(request.ProductId) ?? throw new Exception("Error al obtener la variante del producto");
-
-                if (request.Type == MovementTypeEnum.Entry)
-                {
-                    productVariant.StockQuantity += request.Quantity;
-                }
-                else
-                {
-                    if (productVariant.StockQuantity < request.Quantity)
-                    {
-                        response.IsSuccess = false;
-                        response.Message = "No hay suficiente stock";
-                        return response;
-                    }
-
-                    productVariant.StockQuantity -= request.Quantity;
-                }
-
-                var result = await _unitOfWork.ProductsVariantRepository.EditProductVariant(productVariant);
-
-                if (!result)
-                {
-                    throw new Exception("Error al registrar la entrada o salida del producto");
-                }
-
-                var stockMovement = new StockMovements
-                {
-                    IdVariant = productVariant.VariantId,
-                    MovementType = request.Type.ToString(),
-                    Quantity = request.Quantity,
-                    MovementDate = DateTime.Now,
-                    Notes = stockMessage
-                };
-
-                var resultStockMovement = await _unitOfWork.StockMovementsRepository.RegisterEntryAndExitProduct(stockMovement);
-
-                if (!resultStockMovement)
-                {
-                    throw new Exception("Error al registrar la entrada o salida del producto");
-                }
-
-                transaction.Commit();
-
-                response.IsSuccess = true;
-                response.Data = result;
-                response.Message = ReplyMessage.MESSAGE_SAVE;
+                
 
             }
             catch (Exception ex)

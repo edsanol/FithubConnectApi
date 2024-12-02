@@ -15,5 +15,6 @@
         public string? Token { get; set; } = null;
         public string? RefreshToken { get; set; } = null;
         public string? Nit { get; set; } = null;
+        public List<AccessTypeResponseDto> AccessTypes { get; set; } = new List<AccessTypeResponseDto>();
     }
 }

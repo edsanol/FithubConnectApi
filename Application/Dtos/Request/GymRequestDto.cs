@@ -13,5 +13,6 @@
         public string? Comments { get; set; }
         public bool? Status { get; set; } = true;
         public string Nit { get; set; } = string.Empty;
+        public List<int> AccessTypeIds { get; set; } = new List<int>();
     }
 }

@@ -20,8 +20,10 @@ namespace Infrastructure.Persistences.Repositories
         {
             var response = new BaseEntityResponse<Gym>();
 
-            var gyms = (from c in _context.Gym
-                        select c).AsNoTracking().AsQueryable();
+            var gyms = _context.Gym
+                .Include(g => g.GymAccessTypes) // Incluir la relación con GymAccessTypes
+                .ThenInclude(gat => gat.IdAccessTypeNavigation) // Incluir la relación con AccessType
+                .AsNoTracking().AsQueryable();
 
             if (filters.NumFilter is not null && !string.IsNullOrEmpty(filters.TextFilter))
             {
@@ -64,7 +66,11 @@ namespace Infrastructure.Persistences.Repositories
 
         public async Task<Gym> GetGymById(int gymID)
         {
-            var gym = await _context.Gym.AsNoTracking().FirstOrDefaultAsync(x => x.GymId.Equals(gymID));
+            var gym = await _context.Gym
+                .AsNoTracking()
+                .Include(g => g.GymAccessTypes) // Incluir la relación con GymAccessTypes
+                .ThenInclude(gat => gat.IdAccessTypeNavigation) // Incluir la relación con AccessType
+                .FirstOrDefaultAsync(x => x.GymId == gymID);
 
             return gym!;
         }

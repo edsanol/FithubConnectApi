@@ -39,6 +39,11 @@ namespace Application.Validators.Gym
             RuleFor(x => x.Nit)
                 .NotNull().WithMessage("El campo nit no puede ser nulo")
                 .NotEmpty().WithMessage("El campo nit no puede ser vacio");
+
+            RuleFor(x => x.AccessTypeIds)
+                .NotEmpty().WithMessage("Debe seleccionar al menos un tipo de acceso.")
+                .Must(ids => ids.Distinct().Count() == ids.Count())
+                .WithMessage("No se permiten tipos de acceso duplicados.");
         }
     }
 }

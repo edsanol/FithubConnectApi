@@ -16,8 +16,6 @@ namespace Infrastructure.Persistences.Contexts.Configurations
 
             builder.Property(e => e.OrderDate).HasColumnType("timestamp without time zone");
 
-            builder.Property(e => e.PaymentMethod).IsRequired();
-
             builder.Property(e => e.ShippingAddress).IsRequired();
 
             builder.Property(e => e.Status).IsRequired();

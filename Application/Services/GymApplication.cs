@@ -9,6 +9,7 @@ using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
 using Utilities.Static;
 using BC = BCrypt.Net.BCrypt;
 
@@ -144,6 +145,7 @@ namespace Application.Services
         public async Task<BaseResponse<bool>> RegisterGym(GymRequestDto gymDto)
         {
             var response = new BaseResponse<bool>();
+            IDbContextTransaction? transaction = null;
 
             try
             {
@@ -159,27 +161,56 @@ namespace Application.Services
 
                 var gym = _mapper.Map<Gym>(gymDto);
                 gym.Password = BC.HashPassword(gymDto.Password);
-                var result = await _unitOfWork.GymRepository.RegisterGym(gym);
 
-                if (result)
+                var gymResult = await _unitOfWork.GymRepository.RegisterGym(gym);
+
+                if (!gymResult)
                 {
-                    response.IsSuccess = true;
-                    response.Data = result;
-                    response.Message = ReplyMessage.MESSAGE_SAVE;
-                }
-                else
-                {
+                    transaction?.Rollback();
                     response.IsSuccess = false;
                     response.Message = ReplyMessage.MESSAGE_FAILED;
+                    return response;
                 }
 
+                // Registrar los tipos de acceso asociados
+                if (gymDto.AccessTypeIds != null && gymDto.AccessTypeIds.Any())
+                {
+                    foreach (var accessTypeId in gymDto.AccessTypeIds)
+                    {
+                        var gymAccessType = new GymAccessType
+                        {
+                            IdGym = gym.GymId,
+                            IdAccessType = accessTypeId
+                        };
 
+                        var gymAccessTypeResult = await _unitOfWork.GymAccessTypeRepository.CreateGymAccessType(gymAccessType);
+
+                        if (!gymAccessTypeResult)
+                        {
+                            transaction?.Rollback();
+                            response.IsSuccess = false;
+                            response.Message = ReplyMessage.MESSAGE_FAILED;
+                            return response;
+                        }
+                    }
+                }
+
+                transaction?.Commit();
+
+                response.IsSuccess = true;
+                response.Data = true;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
             }
 
             catch (Exception ex)
             {
+                transaction?.Rollback();
                 response.Message = ex.Message;
                 response.IsSuccess = false;
+            }
+            finally
+            {
+                transaction?.Dispose();
             }
 
             return response;
@@ -209,17 +240,94 @@ namespace Application.Services
             var gym = _mapper.Map<Gym>(gymDto);
             gym.GymId = gymID;
             gym.Password = gymEdit!.Password;
-            response.Data = await _unitOfWork.GymRepository.EditGym(gym);
 
-            if (response.Data)
+            //response.Data = await _unitOfWork.GymRepository.EditGym(gym);
+
+            //if (response.Data)
+            //{
+            //    response.IsSuccess = true;
+            //    response.Message = ReplyMessage.MESSAGE_UPDATE;
+            //}
+            //else
+            //{
+            //    response.IsSuccess = false;
+            //    response.Message = ReplyMessage.MESSAGE_FAILED;
+            //}
+
+            //return response;
+
+            IDbContextTransaction? transaction = null;
+
+            try
             {
+                var gymResult = await _unitOfWork.GymRepository.EditGym(gym);
+
+                if (!gymResult)
+                {
+                    transaction?.Rollback();
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_FAILED;
+                    return response;
+                }
+
+                // Eliminar los tipos de acceso asociados
+                var gymAccessTypes = await _unitOfWork.GymAccessTypeRepository.GetGymAccessTypesByGymID(gym.GymId);
+
+                if (gymAccessTypes != null && gymAccessTypes.Any())
+                {
+                    foreach (var gymAccessType in gymAccessTypes)
+                    {
+                        var gymAccessTypeResult = await _unitOfWork.GymAccessTypeRepository.DeleteGymAccessType(gymAccessType.GymAccessTypeId);
+
+                        if (!gymAccessTypeResult)
+                        {
+                            transaction?.Rollback();
+                            response.IsSuccess = false;
+                            response.Message = ReplyMessage.MESSAGE_FAILED;
+                            return response;
+                        }
+                    }
+                }
+
+                // Registrar los tipos de acceso asociados
+                if (gymDto.AccessTypeIds != null && gymDto.AccessTypeIds.Any())
+                {
+                    foreach (var accessTypeId in gymDto.AccessTypeIds)
+                    {
+                        var gymAccessType = new GymAccessType
+                        {
+                            IdGym = gym.GymId,
+                            IdAccessType = accessTypeId
+                        };
+
+                        var gymAccessTypeResult = await _unitOfWork.GymAccessTypeRepository.CreateGymAccessType(gymAccessType);
+
+                        if (!gymAccessTypeResult)
+                        {
+                            transaction?.Rollback();
+                            response.IsSuccess = false;
+                            response.Message = ReplyMessage.MESSAGE_FAILED;
+                            return response;
+                        }
+                    }
+                }
+
+                transaction?.Commit();
+
                 response.IsSuccess = true;
+                response.Data = true;
                 response.Message = ReplyMessage.MESSAGE_UPDATE;
             }
-            else
+
+            catch (Exception ex)
             {
+                transaction?.Rollback();
+                response.Message = ex.Message;
                 response.IsSuccess = false;
-                response.Message = ReplyMessage.MESSAGE_FAILED;
+            }
+            finally
+            {
+                transaction?.Dispose();
             }
 
             return response;
@@ -472,6 +580,26 @@ namespace Application.Services
             {
                 response.IsSuccess = true;
                 response.Data = _mapper.Map<GymResponseDto>(gym);
+                response.Message = ReplyMessage.MESSAGE_QUERY;
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<IEnumerable<AccessTypeResponseDto>>> ListAccessTypes()
+        {
+            var response = new BaseResponse<IEnumerable<AccessTypeResponseDto>>();
+            var accessTypes = await _unitOfWork.AccessTypeRepository.ListAccessTypes();
+
+            if (accessTypes is not null)
+            {
+                response.IsSuccess = true;
+                response.Data = _mapper.Map<IEnumerable<AccessTypeResponseDto>>(accessTypes);
                 response.Message = ReplyMessage.MESSAGE_QUERY;
             }
             else

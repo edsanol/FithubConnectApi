@@ -21,5 +21,6 @@
         public string? CardAccessCode { get; set; } = string.Empty;
         public int IdGym { get; set; }
         public string? FingerPrint { get; set; }
+        public string? DocumentID { get; set; }
     }
 }
