@@ -196,6 +196,12 @@ namespace Infrastructure.Persistences.Repositories
             return recordsAffected > 0;
         }
 
+        public async Task<bool> CheckEmailExists(string email, int excludeAthleteId)
+        {
+            return await _context.Athlete
+                .AnyAsync(a => a.Email == email && a.AthleteId != excludeAthleteId);
+        }
+
         public async Task<IEnumerable<AthleteBirthDateDto>> GetAthleteBirthDate(int gymID)
         {
             var currentMonth = DateTime.Now.Month;
