@@ -264,5 +264,18 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("RegisterAthleteByQR/{gymID}")]
+        public async Task<ActionResult<BaseResponse<bool>>> RegisterAthleteByQR([FromRoute] int gymID, [FromBody] AthleteRequestDto request)
+        {
+            var response = await _athleteApplication.RegisterAthleteByQR(gymID, request);
+
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
     }
 }
