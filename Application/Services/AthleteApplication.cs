@@ -8,6 +8,7 @@ using AutoMapper;
 using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
+using Infrastructure.Helpers;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -558,11 +559,12 @@ namespace Application.Services
                     throw new Exception("Error al registrar al atleta");
                 }
 
-                var membershiptDuration = await _unitOfWork.MembershipRepository.GetMembershipById(athleteDto.MembershipId);
+                var membershipId = athleteDto.MembershipId ?? 0;
+                var membershiptDuration = await _unitOfWork.MembershipRepository.GetMembershipById(membershipId);
                 var athleteMembership = new AthleteMembership
                 {
                     IdAthlete = athlete.AthleteId,
-                    IdMembership = athleteDto.MembershipId,
+                    IdMembership = membershipId,
                     StartDate = athleteDto?.StartMembershipDate ?? DateOnly.FromDateTime(DateTime.Now),
                     EndDate = athleteDto?.StartMembershipDate?.AddDays(membershiptDuration.DurationInDays) ?? DateOnly.FromDateTime(DateTime.Now.AddDays(membershiptDuration.DurationInDays)),
                 };
@@ -1141,6 +1143,49 @@ namespace Application.Services
             finally
             {
                 transaction?.Dispose();
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<bool>> RegisterAthleteByQR(int gymID, AthleteRequestDto athleteDto)
+        {
+            var response = new BaseResponse<bool>();
+
+            try
+            {
+                var gym = await _unitOfWork.GymRepository.GetGymById(gymID);
+
+                var validationResults = await _validationRules.ValidateAsync(athleteDto);
+
+                if (!validationResults.IsValid)
+                {
+                    response.IsSuccess = false;
+                    response.Errors = validationResults.Errors;
+                    response.Message = ReplyMessage.MESSAGE_VALIDATE;
+                    throw new Exception("Error al validar los datos");
+                }
+
+                var athlete = _mapper.Map<Athlete>(athleteDto);
+                athlete.AuditCreateDate = DateTime.Now;
+                athlete.AuditCreateUser = gym.GymName;
+                athlete.IdGym = gym.GymId;
+
+                var result = await _unitOfWork.AthleteRepository.RegisterAthlete(athlete);
+
+                if (!result)
+                {
+                    throw new Exception("Error al registrar al atleta");
+                }
+
+                response.IsSuccess = true;
+                response.Data = result;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+                response.IsSuccess = false;
             }
 
             return response;
