@@ -197,6 +197,17 @@ namespace Application.Services
                 return response;
             }
 
+            if (!string.IsNullOrEmpty(athleteDto.Email))
+            {
+                var emailExists = await _unitOfWork.AthleteRepository.CheckEmailExists(athleteDto.Email, athleteID);
+                if (emailExists)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "El correo electrónico ya está en uso.";
+                    return response;
+                }
+            }
+
             try
             {
                 var gym = await _unitOfWork.GymRepository.GetGymById(gymID);
@@ -207,10 +218,13 @@ namespace Application.Services
                 athlete.AthleteId = athleteEdit.AthleteId;
                 athlete.IdGym = athleteEdit.IdGym;
                 athlete.Password = athleteEdit.Password;
+                athlete.FingerPrint = athleteEdit.FingerPrint;
                 athlete.AuditCreateDate = athleteEdit.AuditCreateDate;
                 athlete.AuditCreateUser = athleteEdit.AuditCreateUser;
                 athlete.AuditUpdateDate = DateTime.Now;
                 athlete.AuditUpdateUser = gym.GymName;
+                athlete.Email = athleteDto.Email;
+
                 response.Data = await _unitOfWork.AthleteRepository.EditAthlete(athlete);
 
                 if (!response.Data)
