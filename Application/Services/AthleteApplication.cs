@@ -218,6 +218,7 @@ namespace Application.Services
                 athlete.AthleteId = athleteEdit.AthleteId;
                 athlete.IdGym = athleteEdit.IdGym;
                 athlete.Password = athleteEdit.Password;
+                athlete.FingerPrint = athleteEdit.FingerPrint;
                 athlete.AuditCreateDate = athleteEdit.AuditCreateDate;
                 athlete.AuditCreateUser = athleteEdit.AuditCreateUser;
                 athlete.AuditUpdateDate = DateTime.Now;
