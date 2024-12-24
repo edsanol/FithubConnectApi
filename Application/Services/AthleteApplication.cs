@@ -13,6 +13,9 @@ using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
+using System.Security.Cryptography.Xml;
+using System.Text;
 using Utilities.Static;
 using BC = BCrypt.Net.BCrypt;
 
@@ -26,14 +29,17 @@ namespace Application.Services
         private readonly MeasurementProgressValidator _measurementValidationRules;
         private readonly DbFithubContext _context;
         private readonly IJwtHandler _jwtHandler;
+        private readonly ICryptographyApplication _cryptographyApplication;
+        private readonly IConfiguration _configuration;
 
         public AthleteApplication(IUnitOfWork unitOfWork,
             IMapper mapper,
             AthleteValidator validationRules,
             MeasurementProgressValidator measurementValidationRules,
             DbFithubContext _context,
-            IJwtHandler jwtHandler
-            )
+            IJwtHandler jwtHandler,
+            ICryptographyApplication cryptographyApplication,
+            IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -41,6 +47,20 @@ namespace Application.Services
             _measurementValidationRules = measurementValidationRules;
             this._context = _context;
             _jwtHandler = jwtHandler;
+            _cryptographyApplication = cryptographyApplication;
+            _configuration = configuration;
+        }
+
+        private byte[] GetJwtSecret()
+        {
+            return Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? _configuration["Jwt:Secret"]!);
+        }
+
+        private string GetJwtKey()
+        {
+            return Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? _configuration["Jwt:Key"]!;
         }
 
         private async Task<bool> RefreshTokenLogic(int athleteID, string refreshToken, string actualRefreshToken = "")
@@ -1164,13 +1184,24 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<bool>> RegisterAthleteByQR(int gymID, AthleteRequestDto athleteDto)
+        public async Task<BaseResponse<bool>> RegisterAthleteByQR(string gymID, AthleteRequestDto athleteDto)
         {
             var response = new BaseResponse<bool>();
+            var salt = GetJwtSecret();
+            var secret = GetJwtKey();
+            var key = _cryptographyApplication.GenerateUserSpecificKey(secret, salt);
+            var iv = _cryptographyApplication.GenerateIV(salt);
+
+            string decryptedBase64 = _cryptographyApplication.DecryptWithAes(gymID, key, iv);
+
+            // decryptedBase64 es una cadena base64 que contiene "email|password" en bytes
+            byte[] decryptedBytes = Convert.FromBase64String(decryptedBase64);
+            string decryptedText = Encoding.UTF8.GetString(decryptedBytes);
+            int decryptedTextInt = Convert.ToInt32(decryptedText);
 
             try
             {
-                var gym = await _unitOfWork.GymRepository.GetGymById(gymID);
+                var gym = await _unitOfWork.GymRepository.GetGymById(decryptedTextInt);
 
                 var validationResults = await _validationRules.ValidateAsync(athleteDto);
 
@@ -1197,6 +1228,19 @@ namespace Application.Services
                 response.IsSuccess = true;
                 response.Data = result;
                 response.Message = ReplyMessage.MESSAGE_SAVE;
+            }
+            catch (DbUpdateException dbEx)
+            {
+                if (dbEx.InnerException != null && dbEx.InnerException.Message.Contains("unique email"))
+                {
+                    response.Message = "El correo electrónico ingresado ya está registrado en el sistema. Por favor, verifica los datos o utiliza otro correo electrónico para continuar.";
+                }
+                else
+                {
+                    response.Message = "Ocurrió un error inesperado al guardar los cambios. Por favor, inténtelo nuevamente o contacte al soporte técnico.";
+                }
+
+                response.IsSuccess = false;
             }
             catch (Exception ex)
             {
