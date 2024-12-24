@@ -1131,6 +1131,15 @@ namespace Application.Services
                 AccessType = accessTypeValue
             };
 
+            var canAccess = await _unitOfWork.AthleteRepository.AthleteHasAnActiveMembership(athleteID);
+            if (!canAccess)
+            {
+                response.IsSuccess = false;
+                response.Message = "El atleta no cuenta con una membresía activa";
+                response.Data = false;
+                return response;
+            }
+
             var resultAccess = await _unitOfWork.AccessLogRepository.RegisterAccessLog(access);
 
             if (!resultAccess)
