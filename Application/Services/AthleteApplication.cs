@@ -11,6 +11,7 @@ using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Helpers;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Utilities.Static;
 using BC = BCrypt.Net.BCrypt;
@@ -593,6 +594,20 @@ namespace Application.Services
                 response.IsSuccess = true;
                 response.Data = result;
                 response.Message = ReplyMessage.MESSAGE_SAVE;
+            }
+            catch (DbUpdateException dbEx)
+            {
+                if (dbEx.InnerException != null && dbEx.InnerException.Message.Contains("unique email")) 
+                {
+                    response.Message = "El correo electrónico ingresado ya está registrado en el sistema. Por favor, verifica los datos o utiliza otro correo electrónico para continuar.";
+                }
+                else
+                {
+                    response.Message = "Ocurrió un error inesperado al guardar los cambios. Por favor, inténtelo nuevamente o contacte al soporte técnico.";
+                }
+
+                response.IsSuccess = false;
+                transaction?.Rollback();
             }
             catch (Exception ex)
             {
