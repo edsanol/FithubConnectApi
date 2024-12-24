@@ -266,7 +266,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("RegisterAthleteByQR/{gymID}")]
-        public async Task<ActionResult<BaseResponse<bool>>> RegisterAthleteByQR([FromRoute] int gymID, [FromBody] AthleteRequestDto request)
+        public async Task<ActionResult<BaseResponse<bool>>> RegisterAthleteByQR([FromRoute] string gymID, [FromBody] AthleteRequestDto request)
         {
             var response = await _athleteApplication.RegisterAthleteByQR(gymID, request);
 
