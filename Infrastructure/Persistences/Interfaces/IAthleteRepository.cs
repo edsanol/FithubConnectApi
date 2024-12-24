@@ -19,5 +19,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<bool> DestroyAthleteFromDB(string email);
         Task<IEnumerable<AthleteBirthDateDto>> GetAthleteBirthDate(int gymID);
         Task<bool> CheckEmailExists(string email, int excludeAthleteId);
+        Task<bool> AthleteHasAnActiveMembership(int athleteID);
     }
 }

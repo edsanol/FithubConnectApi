@@ -436,5 +436,14 @@ namespace Infrastructure.Persistences.Repositories
             }
             return false;
         }
+
+        public async Task<bool> AthleteHasAnActiveMembership(int athleteID)
+        {
+            return await _context.Athlete
+                .Where(x => x.AthleteId.Equals(athleteID))
+                .AnyAsync(x => x.AthleteMemberships.Any(am => 
+                    !string.IsNullOrEmpty(am.IdMembershipNavigation.MembershipName) &&
+                    am.EndDate >= DateOnly.FromDateTime(DateTime.Now)));
+        }
     }
 }
