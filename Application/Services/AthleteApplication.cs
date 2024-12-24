@@ -741,11 +741,6 @@ namespace Application.Services
                     throw new Exception("El atleta no existe");
                 }
 
-                if (athleteEdit.Data.EndDate > DateOnly.FromDateTime(DateTime.Now))
-                {
-                    throw new Exception("El atleta ya cuenta con una membresía activa");
-                }
-
                 transaction = _context.Database.BeginTransaction();
 
                 var membershiptDuration = await _unitOfWork.MembershipRepository.GetMembershipById(membershipToAthleteDto.MembershipId);
