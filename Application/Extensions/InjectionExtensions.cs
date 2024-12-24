@@ -29,6 +29,7 @@ namespace Application.Extensions
             services.AddScoped<IDashboardApplication, DashboardApplication>();
             services.AddScoped<IInventoryProductsApplication, InventoryProductsApplication>();
             services.AddScoped<IOrdersPaymentsApplication, OrdersPaymentsApplication>();
+            services.AddScoped<ICryptographyApplication, CryptographyApplication>();
 
             return services;
         }

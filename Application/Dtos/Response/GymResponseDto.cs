@@ -3,6 +3,7 @@
     public class GymResponseDto
     {
         public int GymId { get; set; }
+        public string EncryptedId { get; set; } = string.Empty;
         public string GymName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;

@@ -10,7 +10,10 @@ using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
+using System.Text;
 using Utilities.Static;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using BC = BCrypt.Net.BCrypt;
 
 namespace Application.Services
@@ -22,14 +25,36 @@ namespace Application.Services
         private readonly GymValidator _validationRules;
         private readonly IEmailServiceApplication _emailService;
         private readonly IJwtHandler _jwtHandler;
+        private readonly ICryptographyApplication _cryptographyApplication;
+        private readonly IConfiguration _configuration;
 
-        public GymApplication(IUnitOfWork unitOfWork, IMapper mapper, GymValidator validationRules, IEmailServiceApplication emailService, IJwtHandler jwtHandler)
+        public GymApplication(
+            IUnitOfWork unitOfWork, 
+            IMapper mapper, GymValidator validationRules, 
+            IEmailServiceApplication emailService, 
+            IJwtHandler jwtHandler, 
+            ICryptographyApplication cryptographyApplication,
+            IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _validationRules = validationRules;
             _emailService = emailService;
             _jwtHandler = jwtHandler;
+            _cryptographyApplication = cryptographyApplication;
+            _configuration = configuration;
+        }
+
+        private byte[] GetJwtSecret()
+        {
+            return Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET")
+                ?? _configuration["Jwt:Secret"]!);
+        }
+
+        private string GetJwtKey()
+        {
+            return Environment.GetEnvironmentVariable("ID_SECRET")
+                ?? _configuration["Jwt:Key"]!;
         }
 
         private async Task<bool> RefreshTokenLogic(int gymID, string refreshToken, string actualRefreshToken = "")
@@ -374,6 +399,7 @@ namespace Application.Services
         {
             var response = new BaseResponse<GymResponseDto>();
             var gym = await _unitOfWork.GymRepository.LoginGym(loginDto.Email);
+            var salt = GetJwtSecret();
 
             if (gym is not null)
             {
@@ -381,8 +407,18 @@ namespace Application.Services
                 {
                     response.IsSuccess = true;
                     response.Data = _mapper.Map<GymResponseDto>(gym);
+
+                    var secret = GetJwtKey();
+                    var key = _cryptographyApplication.GenerateUserSpecificKey(secret, salt);
+                    var iv = _cryptographyApplication.GenerateIV(salt);
+                    var encryptedIdBytes = Encoding.UTF8.GetBytes(gym.GymId.ToString());
+                    var encryptedIdBase64 = Convert.ToBase64String(encryptedIdBytes);
+
+                    var encryptedId = _cryptographyApplication.EncryptWithAes(encryptedIdBase64, key, iv);
+
                     response.Data.Token = await _jwtHandler.GenerateToken(gym);
                     response.Data.RefreshToken = await _jwtHandler.GenerateRefreshToken(gym);
+                    response.Data.EncryptedId = encryptedId;
                     response.Message = ReplyMessage.MESSAGE_LOGIN;
 
                     bool result = await RefreshTokenLogic(gym.GymId, response.Data.RefreshToken);

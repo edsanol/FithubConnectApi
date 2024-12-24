@@ -159,7 +159,7 @@ namespace Infrastructure.Persistences.Repositories
                 membership.Value = (membership.Value / totalAthletes) * 100;
             }
 
-            return memberships;
+            return memberships.OrderByDescending(x => x.Value).Take(5);
         }
 
         public async Task<bool> UpdateMembership(Membership membership)
