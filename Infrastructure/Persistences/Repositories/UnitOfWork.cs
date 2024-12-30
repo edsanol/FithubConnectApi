@@ -43,6 +43,10 @@ namespace Infrastructure.Persistences.Repositories
 
         public IGymAccessTypeRepository GymAccessTypeRepository { get; private set; }
 
+        public IChannelRepository ChannelRepository { get; private set; }
+
+        public IChannelUsersRepository ChannelUsersRepository { get; private set; }
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -64,6 +68,8 @@ namespace Infrastructure.Persistences.Repositories
             OrdersPaymentsRepository = new OrdersPaymentsRepository(_context) ?? throw new ArgumentNullException(nameof(OrdersPaymentsRepository));
             AccessTypeRepository = new AccessTypeRepository(_context) ?? throw new ArgumentNullException(nameof(AccessTypeRepository));
             GymAccessTypeRepository = new GymAccessTypeRepository(_context) ?? throw new ArgumentNullException(nameof(GymAccessTypeRepository));
+            ChannelRepository = new ChannelRepository(_context) ?? throw new ArgumentNullException(nameof(ChannelRepository));
+            ChannelUsersRepository = new ChannelUsersRepository(_context) ?? throw new ArgumentNullException(nameof(ChannelUsersRepository));
         }
 
         public void Dispose()

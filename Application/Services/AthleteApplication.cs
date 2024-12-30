@@ -8,13 +8,11 @@ using AutoMapper;
 using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
-using Infrastructure.Helpers;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
-using System.Security.Cryptography.Xml;
 using System.Text;
 using Utilities.Static;
 using BC = BCrypt.Net.BCrypt;
@@ -59,7 +57,7 @@ namespace Application.Services
 
         private string GetJwtKey()
         {
-            return Environment.GetEnvironmentVariable("JWT_SECRET")
+            return Environment.GetEnvironmentVariable("ID_SECRET")
                 ?? _configuration["Jwt:Key"]!;
         }
 

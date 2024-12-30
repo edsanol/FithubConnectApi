@@ -22,6 +22,8 @@
         IOrdersPaymentsRepository OrdersPaymentsRepository { get; }
         IAccessTypeRepository AccessTypeRepository { get; }
         IGymAccessTypeRepository GymAccessTypeRepository { get; }
+        IChannelRepository ChannelRepository { get; }
+        IChannelUsersRepository ChannelUsersRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();

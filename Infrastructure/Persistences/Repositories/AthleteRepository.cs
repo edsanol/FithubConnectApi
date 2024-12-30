@@ -99,9 +99,13 @@ namespace Infrastructure.Persistences.Repositories
                                .All(am => am.EndDate < DateOnly.FromDateTime(DateTime.Now)))
                 .CountAsync();
 
+            var dateNow = DateOnly.FromDateTime(DateTime.Now);
+
             // get daily assistance
-            var dailyAssistance = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AccessLogs.Any(al => al.AccessDateTime.Date == DateTime.Now.Date))
+            var dailyAssistance = await _context.AccessLog
+                .Where(x => x.IdAthleteNavigation.IdGym == gymID && x.AccessDateTime.Date == dateNow.ToDateTime(TimeOnly.MinValue).Date)
+                .Select(x => x.IdAthlete)
+                .Distinct()
                 .CountAsync();
 
             // get new athletes by month

@@ -53,4 +53,6 @@ public partial class Athlete
     public virtual ICollection<AthleteToken> AthleteToken { get; set; } = new List<AthleteToken>();
 
     public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
+
+    public virtual ICollection<ChannelUsers> ChannelUsers { get; set; } = new List<ChannelUsers>();
 }

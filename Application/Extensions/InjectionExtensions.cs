@@ -30,6 +30,7 @@ namespace Application.Extensions
             services.AddScoped<IInventoryProductsApplication, InventoryProductsApplication>();
             services.AddScoped<IOrdersPaymentsApplication, OrdersPaymentsApplication>();
             services.AddScoped<ICryptographyApplication, CryptographyApplication>();
+            services.AddScoped<INotificationApplication, NotificationApplication>();
 
             return services;
         }
