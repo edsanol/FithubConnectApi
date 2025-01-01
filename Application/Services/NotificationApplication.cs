@@ -232,5 +232,55 @@ namespace Application.Services
 
             return response;
         }
+
+        public async Task<BaseResponse<bool>> SendNotification(NotificationRequestDto notificationRequestDto)
+        {
+            var response = new BaseResponse<bool>();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            try
+            {
+                // Verifica que el canal pertenece al gimnasio
+                var channel = await _unitOfWork.ChannelRepository.GetChannelById(notificationRequestDto.ChannelId);
+                if (channel == null || channel.IdGym != gymID)
+                {
+                    throw new Exception("Canal no encontrado o no pertenece al gimnasio.");
+                }
+
+                var notification = new Notifications
+                {
+                    IdChannel = notificationRequestDto.ChannelId,
+                    Message = notificationRequestDto.Message,
+                    CreatedAt = DateTime.Now
+                };
+
+                var saveResult = await _unitOfWork.NotificationRepository.SaveNotification(notification);
+
+                if (!saveResult)
+                {
+                    throw new Exception("Error al guardar la notificación");
+                }
+
+                response.IsSuccess = true;
+                response.Data = true;
+                response.Message = "Notificación creada correctamente";
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
     }
 }

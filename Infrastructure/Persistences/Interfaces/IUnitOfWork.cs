@@ -24,6 +24,7 @@
         IGymAccessTypeRepository GymAccessTypeRepository { get; }
         IChannelRepository ChannelRepository { get; }
         IChannelUsersRepository ChannelUsersRepository { get; }
+        INotificationRepository NotificationRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();

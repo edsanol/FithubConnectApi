@@ -47,6 +47,8 @@ namespace Infrastructure.Persistences.Repositories
 
         public IChannelUsersRepository ChannelUsersRepository { get; private set; }
 
+        public INotificationRepository NotificationRepository { get; private set; }
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -70,6 +72,7 @@ namespace Infrastructure.Persistences.Repositories
             GymAccessTypeRepository = new GymAccessTypeRepository(_context) ?? throw new ArgumentNullException(nameof(GymAccessTypeRepository));
             ChannelRepository = new ChannelRepository(_context) ?? throw new ArgumentNullException(nameof(ChannelRepository));
             ChannelUsersRepository = new ChannelUsersRepository(_context) ?? throw new ArgumentNullException(nameof(ChannelUsersRepository));
+            NotificationRepository = new NotificationRepository(_context) ?? throw new ArgumentNullException(nameof(NotificationRepository));
         }
 
         public void Dispose()

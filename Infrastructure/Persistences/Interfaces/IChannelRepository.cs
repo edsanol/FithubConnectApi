@@ -6,5 +6,6 @@ namespace Infrastructure.Persistences.Interfaces
     {
         Task<bool> CreateChannel(Channels channel);
         Task<List<Channels>> GetChannelsByGymId(int gymId);
+        Task<Channels> GetChannelById(long channelId);
     }
 }

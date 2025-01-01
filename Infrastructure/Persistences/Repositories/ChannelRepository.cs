@@ -20,6 +20,14 @@ namespace Infrastructure.Persistences.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
+        public async Task<Channels> GetChannelById(long channelId)
+        {
+            var response = await _context.Channels
+                .FirstOrDefaultAsync(x => x.ChannelId == channelId);
+
+            return response ?? throw new Exception("Channel not found");
+        }
+
         public async Task<List<Channels>> GetChannelsByGymId(int gymId)
         {
             var response = await _context.Channels
