@@ -11,5 +11,6 @@ namespace Application.Interfaces
         Task<BaseResponse<bool>> RemoveUserFromChannel(UserChannelRequestDto userChannelRequestDto);
         Task<BaseResponse<List<ChannelResponseDto>>> GetChannels();
         Task<BaseResponse<bool>> SendNotification(NotificationRequestDto notificationRequestDto);
+        Task<BaseResponse<List<NotificationResponseDto>>> GetNotificationsByChannel(long channelId);
     }
 }

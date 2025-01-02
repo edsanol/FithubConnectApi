@@ -8,7 +8,7 @@
 
         public string Message { get; set; } = null!;
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime SendAt { get; set; }
 
         public virtual Channels IdChannelNavigation { get; set; } = null!;
     }

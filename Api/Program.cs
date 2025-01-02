@@ -63,9 +63,6 @@ builder.Services.AddHttpContextAccessor();
 // 5) Controladores
 builder.Services.AddControllers();
 
-// 6) Añadir SignalR 
-builder.Services.AddSignalR();
-
 // 7) Otros servicios: Swagger, etc.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -73,14 +70,21 @@ builder.Services.AddSwaggerGen();
 // 8) CORS
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(
-        builder =>
-        {
-            builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-        });
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        // Aquí indicas el front que permites
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Esto es clave si SignalR va con credenciales
+    });
 });
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
+
+app.UseCors("CorsPolicy");
 
 //if (app.Environment.IsDevelopment())
 //{
@@ -91,14 +95,11 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// 10) CORS
-app.UseCors();
-
-// 11) Autenticación y Autorización
+// 10) Autenticación y Autorización
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 12) Mapeo de controladores
+// 11) Mapeo de controladores
 app.MapControllers();
 
 // 13) Mapeo de tu Hub (SignalR)

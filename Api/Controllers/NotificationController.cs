@@ -67,10 +67,21 @@ namespace Api.Controllers
             {
                 // Notificamos a todos en el grupo con Id == dto.ChannelId
                 await _hubContext.Clients.Group(notificationRequestDto.ChannelId.ToString())
-                    .SendAsync("ReceiveMessage", notificationRequestDto.Message);
+                    .SendAsync("ReceiveMessage", notificationRequestDto.ChannelId, notificationRequestDto.Message);
             }
 
             return response.IsSuccess ? Ok(response) : BadRequest(response);
+        }
+
+        [HttpGet("GetNotificationsByChannel")]
+        public async Task<ActionResult<BaseResponse<List<NotificationResponseDto>>>> GetNotificationsByChannel([FromQuery] long channelId)
+        {
+            var response = await _notificationApplication.GetNotificationsByChannel(channelId);
+
+            if (!response.IsSuccess)
+                return BadRequest(response);
+
+            return Ok(response);
         }
     }
 }

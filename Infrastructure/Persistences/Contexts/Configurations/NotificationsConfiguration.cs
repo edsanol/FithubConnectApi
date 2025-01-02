@@ -14,7 +14,7 @@ namespace Infrastructure.Persistences.Contexts.Configurations
 
             builder.Property(e => e.NotificationId).HasColumnName("NotificationID");
 
-            builder.Property(e => e.CreatedAt).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()");
+            builder.Property(e => e.SendAt).HasColumnType("timestamp without time zone").HasDefaultValueSql("now()");
 
             builder.HasOne(d => d.IdChannelNavigation).WithMany(p => p.Notifications)
                 .HasForeignKey(d => d.IdChannel)

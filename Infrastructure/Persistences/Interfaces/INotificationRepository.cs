@@ -5,5 +5,6 @@ namespace Infrastructure.Persistences.Interfaces
     public interface INotificationRepository
     {
         Task<bool> SaveNotification(Notifications notification);
+        Task<List<Notifications>> GetNotificationsByChannel(long channelId);
     }
 }

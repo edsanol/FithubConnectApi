@@ -181,6 +181,33 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<BaseResponse<List<NotificationResponseDto>>> GetNotificationsByChannel(long channelId)
+        {
+            var response = new BaseResponse<List<NotificationResponseDto>>();
+
+            try
+            {
+                var notifications = await _unitOfWork.NotificationRepository.GetNotificationsByChannel(channelId);
+
+                response.Data = notifications.Select(n => new NotificationResponseDto
+                {
+                    NotificationId = n.NotificationId,
+                    ChannelId = n.IdChannel,
+                    Message = n.Message,
+                    SendAt = n.SendAt
+                }).ToList();
+
+                response.IsSuccess = true;
+                response.Message = "Historial obtenido correctamente";
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
 
         public async Task<BaseResponse<bool>> RemoveUserFromChannel(UserChannelRequestDto userChannelRequestDto)
         {
@@ -260,7 +287,7 @@ namespace Application.Services
                 {
                     IdChannel = notificationRequestDto.ChannelId,
                     Message = notificationRequestDto.Message,
-                    CreatedAt = DateTime.Now
+                    SendAt = DateTime.Now
                 };
 
                 var saveResult = await _unitOfWork.NotificationRepository.SaveNotification(notification);
