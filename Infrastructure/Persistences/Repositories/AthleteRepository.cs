@@ -3,6 +3,7 @@ using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
+using LinqKit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistences.Repositories
@@ -332,7 +333,25 @@ namespace Infrastructure.Persistences.Repositories
                                 !excludedAthleteIds.Contains(x.AthleteId) ||
                                 (excludedAthleteIds.Contains(x.AthleteId) && x.AuditUpdateDate > endDate));
                         }
+                        break;
+                    case 6:
+                        athletes = athletes.Where(x => x.IdGym.Equals(gymID) &&
+                            x.AthleteMemberships.Any(am => am.IdMembershipNavigation.MembershipId.Equals(Int32.Parse(filters.TextFilter))));
+                        break;
+                    case 7:
+                        if (!string.IsNullOrEmpty(filters.TextFilter))
+                        {
+                            var filterWords = filters.TextFilter.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
+                            var predicate = PredicateBuilder.New<Athlete>(false);
+                            foreach (var word in filterWords)
+                            {
+                                string lowerWord = word.ToLower();
+                                predicate = predicate.Or(x => x.AthleteName.ToLower().Contains(lowerWord) || x.AthleteLastName.ToLower().Contains(lowerWord));
+                            }
+
+                            athletes = athletes.Where(predicate);
+                        }
                         break;
                 }
             }
