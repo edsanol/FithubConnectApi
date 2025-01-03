@@ -42,22 +42,54 @@ namespace Application.Services
             {
                 transaction = _context.Database.BeginTransaction();
 
-                var channelUsers = userChannelRequestDto.UserIds.Select(userId => new ChannelUsers
+                if (userChannelRequestDto.AllUsersSelected == false && userChannelRequestDto.AllUsersSelectedByMembersip == false)
                 {
-                    IdChannel = userChannelRequestDto.ChannelId,
-                    IdAthlete = userId
-                }).ToList();
+                    var channelUsers = userChannelRequestDto.UserIds.Select(userId => new ChannelUsers
+                    {
+                        IdChannel = userChannelRequestDto.ChannelId,
+                        IdAthlete = userId
+                    }).ToList();
 
-                var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
-                    .AddUsersToChannel(channelUsers, userChannelRequestDto.ChannelId);
+                    var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
+                        .AddUsersToChannel(channelUsers, userChannelRequestDto.ChannelId);
 
-                if (!addUsersToChannelResult)
+                }
+                else if (userChannelRequestDto.AllUsersSelected == true && userChannelRequestDto.AllUsersSelectedByMembersip == false)
                 {
-                    throw new Exception("Error al registrar al atleta");
+                    var allAthletes = await _unitOfWork.AthleteRepository.GetAllAthletesByGymID(gymID);
+
+                    var athletes = allAthletes.Where(a => !userChannelRequestDto.DeselectedUserIds.Contains(a.AthleteId)).ToList();
+
+                    var channelUsers = athletes.Select(athlete => new ChannelUsers
+                    {
+                        IdChannel = userChannelRequestDto.ChannelId,
+                        IdAthlete = athlete.AthleteId
+                    }).ToList();
+
+                    var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
+                        .AddUsersToChannel(channelUsers, userChannelRequestDto.ChannelId);
+
+                }
+                else if (userChannelRequestDto.AllUsersSelected == false && userChannelRequestDto.AllUsersSelectedByMembersip == true)
+                {
+                    var allAthletesByMembership = await _unitOfWork.AthleteRepository
+                        .GetAllAthletesByMembershipID(userChannelRequestDto.MembershipIds);
+
+                    var athletes = allAthletesByMembership.Where(a => 
+                        !userChannelRequestDto.DeselectedUserIds.Contains(a.AthleteId)).ToList();
+
+                    var channelUsers = athletes.Select(athlete => new ChannelUsers
+                    {
+                        IdChannel = userChannelRequestDto.ChannelId,
+                        IdAthlete = athlete.AthleteId
+                    }).ToList();
+
+                    var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
+                        .AddUsersToChannel(channelUsers, userChannelRequestDto.ChannelId);
                 }
 
                 response.IsSuccess = true;
-                response.Data = addUsersToChannelResult;
+                response.Data = true;
                 response.Message = "Atleta registrado correctamente";
             }
             catch (Exception ex)
@@ -108,21 +140,52 @@ namespace Application.Services
                     throw new Exception("Error al registrar al atleta");
                 }
 
-                var channelUsers = channelRequestDto.UserIds.Select(userId => new ChannelUsers
+                if (channelRequestDto.AllUsersSelected == false && channelRequestDto.AllUsersSelectedByMembersip == false)
                 {
-                    IdChannel = channel.ChannelId,
-                    IdAthlete = userId
-                }).ToList();
+                    var channelUsers = channelRequestDto.UserIds.Select(userId => new ChannelUsers
+                    {
+                        IdChannel = channel.ChannelId,
+                        IdAthlete = userId
+                    }).ToList();
 
-                var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository.AddUsersToChannel(channelUsers, channel.ChannelId);
+                    var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
+                        .AddUsersToChannel(channelUsers, channel.ChannelId);
 
-                if (!addUsersToChannelResult)
+                } else if (channelRequestDto.AllUsersSelected == true && channelRequestDto.AllUsersSelectedByMembersip == false)
                 {
-                    throw new Exception("Error al registrar al atleta");
+                    var allAthletes = await _unitOfWork.AthleteRepository.GetAllAthletesByGymID(gymID);
+
+                    var athletes = allAthletes.Where(a => !channelRequestDto.DeselectedUserIds.Contains(a.AthleteId)).ToList();
+
+                    var channelUsers = athletes.Select(athlete => new ChannelUsers
+                    {
+                        IdChannel = channel.ChannelId,
+                        IdAthlete = athlete.AthleteId
+                    }).ToList();
+
+                    var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
+                        .AddUsersToChannel(channelUsers, channel.ChannelId);
+
+                } else if (channelRequestDto.AllUsersSelected == false && channelRequestDto.AllUsersSelectedByMembersip == true)
+                {
+                    var allAthletesByMembership = await _unitOfWork.AthleteRepository
+                        .GetAllAthletesByMembershipID(channelRequestDto.MembershipIds);
+
+                    var athletes = allAthletesByMembership.Where(a => 
+                        !channelRequestDto.DeselectedUserIds.Contains(a.AthleteId)).ToList();
+
+                    var channelUsers = athletes.Select(athlete => new ChannelUsers
+                    {
+                        IdChannel = channel.ChannelId,
+                        IdAthlete = athlete.AthleteId
+                    }).ToList();
+
+                    var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
+                        .AddUsersToChannel(channelUsers, channel.ChannelId);
                 }
 
                 response.IsSuccess = true;
-                response.Data = addUsersToChannelResult;
+                response.Data = true;
                 response.Message = "Canal creado correctamente";
             }
             catch (Exception ex)

@@ -335,8 +335,20 @@ namespace Infrastructure.Persistences.Repositories
                         }
                         break;
                     case 6:
-                        athletes = athletes.Where(x => x.IdGym.Equals(gymID) &&
-                            x.AthleteMemberships.Any(am => am.IdMembershipNavigation.MembershipId.Equals(Int32.Parse(filters.TextFilter))));
+                        if (!string.IsNullOrEmpty(filters.TextFilter))
+                        {
+                            // Dividir el filtro en una lista de IDs
+                            var membershipIds = filters.TextFilter
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(int.Parse)
+                                .ToList();
+
+                            // Filtrar por múltiples membresías
+                            athletes = athletes.Where(x => x.IdGym.Equals(gymID) &&
+                                x.AthleteMemberships.Any(am =>
+                                    membershipIds.Contains(am.IdMembershipNavigation.MembershipId) &&
+                                    am.EndDate >= DateOnly.FromDateTime(DateTime.Now)));
+                        }
                         break;
                     case 7:
                         if (!string.IsNullOrEmpty(filters.TextFilter))
@@ -467,6 +479,20 @@ namespace Infrastructure.Persistences.Repositories
                 .AnyAsync(x => x.AthleteMemberships.Any(am => 
                     !string.IsNullOrEmpty(am.IdMembershipNavigation.MembershipName) &&
                     am.EndDate >= DateOnly.FromDateTime(DateTime.Now)));
+        }
+
+        public async Task<List<Athlete>> GetAllAthletesByGymID(int gymID)
+        {
+            return await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID))
+                .ToListAsync();
+        }
+
+        public async Task<List<Athlete>> GetAllAthletesByMembershipID(List<int> membershipIDs)
+        {
+            return await _context.Athlete
+                .Where(x => x.AthleteMemberships.Any(am => membershipIDs.Contains(am.IdMembership)))
+                .ToListAsync();
         }
     }
 }
