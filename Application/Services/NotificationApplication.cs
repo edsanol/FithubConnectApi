@@ -48,7 +48,8 @@ namespace Application.Services
                     IdAthlete = userId
                 }).ToList();
 
-                var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository.AddUsersToChannel(channelUsers);
+                var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
+                    .AddUsersToChannel(channelUsers, userChannelRequestDto.ChannelId);
 
                 if (!addUsersToChannelResult)
                 {
@@ -113,7 +114,7 @@ namespace Application.Services
                     IdAthlete = userId
                 }).ToList();
 
-                var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository.AddUsersToChannel(channelUsers);
+                var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository.AddUsersToChannel(channelUsers, channel.ChannelId);
 
                 if (!addUsersToChannelResult)
                 {
@@ -155,7 +156,7 @@ namespace Application.Services
 
             try
             {
-                var channels = await _unitOfWork.ChannelRepository.GetChannelsByGymId(gymID) 
+                var channels = await _unitOfWork.ChannelRepository.GetChannelsByGymId(gymID)
                     ?? throw new Exception("Error al obtener los canales");
 
                 response.IsSuccess = true;
@@ -166,10 +167,13 @@ namespace Application.Services
                     ChannelAthletes = channel.ChannelUsers.Select(channelUser => new ChannelAthletesDto
                     {
                         AthleteId = channelUser.IdAthlete,
-                        AthleteName = channelUser.IdAthleteNavigation.AthleteName + " " + channelUser.IdAthleteNavigation.AthleteLastName 
+                        AthleteName = channelUser.IdAthleteNavigation.AthleteName + " " + channelUser.IdAthleteNavigation.AthleteLastName
                             ?? string.Empty
-                    }).ToList()
-                }).ToList();
+                    }).ToList(),
+                    LastMessage = channel.Notifications.OrderByDescending(n => n.SendAt).FirstOrDefault()?.Message ?? string.Empty
+                }).ToList().OrderByDescending(c => c.LastMessage).ToList();
+
+                response.IsSuccess = true;
                 response.Message = "Canales obtenidos correctamente";
             }
             catch (Exception ex)

@@ -4,7 +4,7 @@ namespace Infrastructure.Persistences.Interfaces
 {
     public interface IChannelUsersRepository
     {
-        Task<bool> AddUsersToChannel(List<ChannelUsers> channel);
+        Task<bool> AddUsersToChannel(List<ChannelUsers> channel, long channelId);
         Task<bool> RemoveUsersFromChannel(List<ChannelUsers> channel);
     }
 }

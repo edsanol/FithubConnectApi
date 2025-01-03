@@ -13,10 +13,13 @@ namespace Infrastructure.Persistences.Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public async Task<bool> AddUsersToChannel(List<ChannelUsers> channel)
+        public async Task<bool> AddUsersToChannel(List<ChannelUsers> channel, long channelId)
         {
+            _context.ChannelUsers.RemoveRange(_context.ChannelUsers.Where(x => x.IdChannel == channelId));
             await _context.ChannelUsers.AddRangeAsync(channel);
+
             return await _context.SaveChangesAsync() > 0;
+
         }
 
         public async Task<bool> RemoveUsersFromChannel(List<ChannelUsers> channel)

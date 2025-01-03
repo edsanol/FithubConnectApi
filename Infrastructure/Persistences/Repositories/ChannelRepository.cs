@@ -32,6 +32,7 @@ namespace Infrastructure.Persistences.Repositories
         {
             var response = await _context.Channels
                 .Include(x => x.ChannelUsers).ThenInclude(x => x.IdAthleteNavigation)
+                .Include(x => x.Notifications)
                 .Where(x => x.IdGym == gymId)
                 .AsNoTracking()
                 .ToListAsync();
