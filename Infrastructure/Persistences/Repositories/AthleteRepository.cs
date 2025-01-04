@@ -5,6 +5,7 @@ using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using LinqKit;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace Infrastructure.Persistences.Repositories
 {
@@ -484,14 +485,15 @@ namespace Infrastructure.Persistences.Repositories
         public async Task<List<Athlete>> GetAllAthletesByGymID(int gymID)
         {
             return await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID))
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true)
                 .ToListAsync();
         }
 
         public async Task<List<Athlete>> GetAllAthletesByMembershipID(List<int> membershipIDs)
         {
             return await _context.Athlete
-                .Where(x => x.AthleteMemberships.Any(am => membershipIDs.Contains(am.IdMembership)))
+                .Where(x => x.AthleteMemberships.Any(am => membershipIDs.Contains(am.IdMembership) 
+                    && am.EndDate >= DateOnly.FromDateTime(DateTime.Now)))
                 .ToListAsync();
         }
     }
