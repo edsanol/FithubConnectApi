@@ -31,6 +31,7 @@ namespace Application.Extensions
             services.AddScoped<IOrdersPaymentsApplication, OrdersPaymentsApplication>();
             services.AddScoped<ICryptographyApplication, CryptographyApplication>();
             services.AddScoped<INotificationApplication, NotificationApplication>();
+            services.AddScoped<IPushNotificationService, PushNotificationService>();
 
             return services;
         }

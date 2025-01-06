@@ -10,6 +10,10 @@
 
         public DateTime SendAt { get; set; }
 
+        public string Type { get; set; } = null!;
+
+        public string Title { get; set; } = null!;
+
         public virtual Channels IdChannelNavigation { get; set; } = null!;
     }
 }

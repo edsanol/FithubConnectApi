@@ -25,6 +25,7 @@
         IChannelRepository ChannelRepository { get; }
         IChannelUsersRepository ChannelUsersRepository { get; }
         INotificationRepository NotificationRepository { get; }
+        IUserDeviceTokenRepository UserDeviceTokenRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();

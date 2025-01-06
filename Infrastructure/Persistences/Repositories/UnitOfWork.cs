@@ -49,6 +49,8 @@ namespace Infrastructure.Persistences.Repositories
 
         public INotificationRepository NotificationRepository { get; private set; }
 
+        public IUserDeviceTokenRepository UserDeviceTokenRepository { get; private set; }
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -73,6 +75,7 @@ namespace Infrastructure.Persistences.Repositories
             ChannelRepository = new ChannelRepository(_context) ?? throw new ArgumentNullException(nameof(ChannelRepository));
             ChannelUsersRepository = new ChannelUsersRepository(_context) ?? throw new ArgumentNullException(nameof(ChannelUsersRepository));
             NotificationRepository = new NotificationRepository(_context) ?? throw new ArgumentNullException(nameof(NotificationRepository));
+            UserDeviceTokenRepository = new UserDeviceTokenRepository(_context) ?? throw new ArgumentNullException(nameof(UserDeviceTokenRepository));
         }
 
         public void Dispose()

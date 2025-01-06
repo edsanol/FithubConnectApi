@@ -277,5 +277,18 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("RegisterDeviceToken")]
+        public async Task<ActionResult<BaseResponse<bool>>> RegisterDeviceToken([FromBody] DeviceTokenRequestDto request)
+        {
+            var response = await _athleteApplication.RegisterDeviceToken(request);
+
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
     }
 }

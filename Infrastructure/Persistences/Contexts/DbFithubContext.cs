@@ -72,6 +72,8 @@ public partial class DbFithubContext : DbContext
 
     public virtual DbSet<Notifications> Notifications { get; set; }
 
+    public virtual DbSet<UserDeviceToken> UserDeviceToken { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasAnnotation("Relational:Collation", "Modern_Spanish_CI_AS");

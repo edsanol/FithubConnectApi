@@ -12,5 +12,7 @@ namespace Application.Interfaces
         Task<BaseResponse<List<ChannelResponseDto>>> GetChannels();
         Task<BaseResponse<bool>> SendNotification(NotificationRequestDto notificationRequestDto);
         Task<BaseResponse<List<NotificationResponseDto>>> GetNotificationsByChannel(long channelId);
+        Task<BaseResponse<List<long>>> GetChannelsByAthlete();
+        Task<BaseResponse<List<NotificationResponseDto>>> GetNotificationsByAthlete();
     }
 }

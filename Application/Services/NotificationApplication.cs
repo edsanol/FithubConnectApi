@@ -14,12 +14,19 @@ namespace Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IJwtHandler _jwtHandler;
         private readonly DbFithubContext _context;
+        private readonly IPushNotificationService _pushNotificationService;
 
-        public NotificationApplication(IUnitOfWork unitOfWork, IJwtHandler jwtHandler, DbFithubContext _context)
+        public NotificationApplication(
+            IUnitOfWork unitOfWork, 
+            IJwtHandler jwtHandler, 
+            DbFithubContext _context, 
+            IPushNotificationService pushNotificationService
+        )
         {
             _unitOfWork = unitOfWork;
             _jwtHandler = jwtHandler;
             this._context = _context;
+            _pushNotificationService = pushNotificationService;
         }
 
         public async Task<BaseResponse<bool>> AddUserToChannel(UserChannelRequestDto userChannelRequestDto)
@@ -248,6 +255,80 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<BaseResponse<List<long>>> GetChannelsByAthlete()
+        {
+            var response = new BaseResponse<List<long>>();
+
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "deportista")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var athleteID = _jwtHandler.ExtractIdFromToken();
+
+            try
+            {
+                var channelsIds = await _unitOfWork.ChannelRepository.GetChannelsByAthleteId(athleteID)
+                    ?? throw new Exception("Error al obtener los canales");
+
+                response.IsSuccess = true;
+                response.Data = channelsIds;
+                response.Message = "Canales obtenidos correctamente";
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<List<NotificationResponseDto>>> GetNotificationsByAthlete()
+        {
+            var response = new BaseResponse<List<NotificationResponseDto>>();
+
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "deportista")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var athleteID = _jwtHandler.ExtractIdFromToken();
+
+            try
+            {
+                var notifications = await _unitOfWork.NotificationRepository.GetNotificationsByAthlete(athleteID);
+
+                response.Data = notifications.Select(n => new NotificationResponseDto
+                {
+                    NotificationId = n.NotificationId,
+                    ChannelId = n.IdChannel,
+                    Message = n.Message,
+                    SendAt = n.SendAt,
+                    Type = n.Type,
+                    Title = n.Title
+                }).ToList();
+
+                response.IsSuccess = true;
+                response.Message = "Historial obtenido correctamente";
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+
         public async Task<BaseResponse<List<NotificationResponseDto>>> GetNotificationsByChannel(long channelId)
         {
             var response = new BaseResponse<List<NotificationResponseDto>>();
@@ -354,7 +435,9 @@ namespace Application.Services
                 {
                     IdChannel = notificationRequestDto.ChannelId,
                     Message = notificationRequestDto.Message,
-                    SendAt = DateTime.Now
+                    SendAt = DateTime.Now,
+                    Type = notificationRequestDto.Type,
+                    Title = notificationRequestDto.Title
                 };
 
                 var saveResult = await _unitOfWork.NotificationRepository.SaveNotification(notification);
@@ -363,6 +446,18 @@ namespace Application.Services
                 {
                     throw new Exception("Error al guardar la notificación");
                 }
+
+                var athleteIds = await _unitOfWork.ChannelUsersRepository
+                    .GetAllAthleteIdsByChannel(notificationRequestDto.ChannelId);
+
+                var deviceTokens = await _unitOfWork.UserDeviceTokenRepository
+                    .GetDeviceTokensByAthleteIds(athleteIds);
+
+                await _pushNotificationService.SendPushNotificationAsync(
+                    deviceTokens,
+                    notificationRequestDto.Title,
+                    notificationRequestDto.Message
+                );
 
                 response.IsSuccess = true;
                 response.Data = true;

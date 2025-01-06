@@ -42,6 +42,21 @@ namespace Api.Hubs
         }
 
         /// <summary>
+        /// Permite que un cliente se "suscriba" a varios canales.
+        /// Internamente, SignalR usa grupos para agrupar las conexiones.
+        /// </summary>
+        /// <param name="channelIds">Lista de Ids de los canales a los que se desea unir.</param>
+        public async Task JoinAllChannelsByAthlete(List<long> channelIds)
+        {
+            foreach (var channelId in channelIds)
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, channelId.ToString());
+            }
+
+            await Clients.Caller.SendAsync("AllChannelsJoined", $"Connection {Context.ConnectionId} joined all channels");
+        }
+
+        /// <summary>
         /// Permite salir de un canal específico.
         /// </summary>
         public async Task LeaveChannel(long channelId)

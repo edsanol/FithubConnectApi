@@ -18,7 +18,7 @@ namespace Api.Controllers
         private readonly IHubContext<NotificationHub> _hubContext;
 
         public NotificationController(
-            INotificationApplication notificationApplication, 
+            INotificationApplication notificationApplication,
             IHubContext<NotificationHub> hubContext
         )
         {
@@ -77,6 +77,28 @@ namespace Api.Controllers
         public async Task<ActionResult<BaseResponse<List<NotificationResponseDto>>>> GetNotificationsByChannel([FromQuery] long channelId)
         {
             var response = await _notificationApplication.GetNotificationsByChannel(channelId);
+
+            if (!response.IsSuccess)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetChannelsByAthlete")]
+        public async Task<ActionResult<BaseResponse<List<long>>>> GetChannelsByAthlete()
+        {
+            var response = await _notificationApplication.GetChannelsByAthlete();
+
+            if (!response.IsSuccess)
+                return BadRequest(response);
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetNotificationsByAthlete")]
+        public async Task<ActionResult<BaseResponse<List<NotificationResponseDto>>>> GetNotificationsByAthlete()
+        {
+            var response = await _notificationApplication.GetNotificationsByAthlete();
 
             if (!response.IsSuccess)
                 return BadRequest(response);

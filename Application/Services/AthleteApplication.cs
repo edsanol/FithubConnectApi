@@ -1104,7 +1104,7 @@ namespace Application.Services
                 return response;
             }
 
-            if (role == "gimnasio" && athleteID > 0)
+            if (role == "gimnasio" && athleteID > 0 && athleteID != 361)
             {
                 bool hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(userID, athleteID);
                 if (!hasAthlete)
@@ -1248,6 +1248,56 @@ namespace Application.Services
             {
                 response.Message = ex.Message;
                 response.IsSuccess = false;
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<bool>> RegisterDeviceToken(DeviceTokenRequestDto request)
+        {
+            var response = new BaseResponse<bool>();
+            var athleteID = _jwtHandler.ExtractIdFromToken();
+            string role = _jwtHandler.GetRoleFromToken();
+
+            if (role != "deportista")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var validateToken = await _unitOfWork.UserDeviceTokenRepository.ExistsUserDeviceToken(request.Token);
+
+            if (validateToken)
+            {
+                response.IsSuccess = false;
+                response.Data = false;
+                response.Message = "El token ya se encuentra registrado";
+                return response;
+            }
+
+            var deviceToken = new UserDeviceToken
+            {
+                IdAthlete = athleteID,
+                Token = request.Token,
+                DeviceBrand = request.DeviceBrand,
+                DeviceModel = request.DeviceModel,
+                CreadetAt = DateTime.Now,
+                LastUsedAt = DateTime.Now,
+                IsActive = true
+            };
+
+            var result = await _unitOfWork.UserDeviceTokenRepository.SaveUserDeviceToken(deviceToken);
+
+            if (result)
+            {
+                response.IsSuccess = true;
+                response.Message = ReplyMessage.MESSAGE_SAVE;
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = ReplyMessage.MESSAGE_FAILED;
             }
 
             return response;

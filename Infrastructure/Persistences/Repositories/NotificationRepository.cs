@@ -14,6 +14,15 @@ namespace Infrastructure.Persistences.Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
+        public async Task<List<Notifications>> GetNotificationsByAthlete(int athleteId)
+        {
+            return await _context.Notifications
+                .Where(n => n.IdChannelNavigation.ChannelUsers.Any(cu => cu.IdAthlete == athleteId) &&
+                    n.SendAt >= DateTime.Now.AddDays(-7))
+                .OrderByDescending(n => n.SendAt)
+                .ToListAsync();
+        }
+
         public async Task<List<Notifications>> GetNotificationsByChannel(long channelId)
         {
             return await _context.Notifications

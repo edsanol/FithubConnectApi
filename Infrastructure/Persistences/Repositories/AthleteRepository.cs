@@ -104,11 +104,21 @@ namespace Infrastructure.Persistences.Repositories
             var dateNow = DateOnly.FromDateTime(DateTime.Now);
 
             // get daily assistance
-            var dailyAssistance = await _context.AccessLog
-                .Where(x => x.IdAthleteNavigation.IdGym == gymID && x.AccessDateTime.Date == dateNow.ToDateTime(TimeOnly.MinValue).Date)
+            var distinctAthletesCount = await _context.AccessLog
+                .Where(x => x.IdGym == gymID 
+                    && x.AccessDateTime.Date == dateNow.ToDateTime(TimeOnly.MinValue).Date
+                    && x.AccessType != 5)
                 .Select(x => x.IdAthlete)
                 .Distinct()
                 .CountAsync();
+
+            var invitedCount = await _context.AccessLog
+                .Where(x => x.IdGym == gymID
+                    && x.AccessDateTime.Date == dateNow.ToDateTime(TimeOnly.MinValue).Date
+                    && x.AccessType == 5)
+                .CountAsync();
+
+            var dailyAssistance = distinctAthletesCount + invitedCount;
 
             // get new athletes by month
             var newAthletesByMonth = await _context.Athlete

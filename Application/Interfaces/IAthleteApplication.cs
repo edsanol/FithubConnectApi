@@ -30,5 +30,6 @@ namespace Application.Interfaces
         Task<BaseResponse<bool>> AccessAthleteFingerPrint(int athleteID, int? accessType);
         Task<bool> DestroyAthleteFromDB(DestroyAthleteRequestDto request);
         Task<BaseResponse<bool>> RegisterAthleteByQR(string gymID, AthleteRequestDto athleteDto);
+        Task<BaseResponse<bool>> RegisterDeviceToken(DeviceTokenRequestDto request);
     }
 }

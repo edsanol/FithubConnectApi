@@ -28,6 +28,16 @@ namespace Infrastructure.Persistences.Repositories
             return response ?? throw new Exception("Channel not found");
         }
 
+        public async Task<List<long>> GetChannelsByAthleteId(int athleteId)
+        {
+            var response = await _context.ChannelUsers
+                .Where(x => x.IdAthlete == athleteId)
+                .Select(x => x.IdChannel)
+                .ToListAsync();
+
+            return response;
+        }
+
         public async Task<List<Channels>> GetChannelsByGymId(int gymId)
         {
             var response = await _context.Channels

@@ -6,5 +6,6 @@ namespace Infrastructure.Persistences.Interfaces
     {
         Task<bool> AddUsersToChannel(List<ChannelUsers> channel, long channelId);
         Task<bool> RemoveUsersFromChannel(List<ChannelUsers> channel);
+        Task<List<int>> GetAllAthleteIdsByChannel(long channelId);
     }
 }
