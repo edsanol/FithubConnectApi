@@ -4,7 +4,6 @@ using Application.Dtos.Response;
 using Application.Interfaces;
 using Application.Validators.Gym;
 using AutoMapper;
-using Azure.Core;
 using Domain.Entities;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
@@ -13,7 +12,6 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using System.Text;
 using Utilities.Static;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using BC = BCrypt.Net.BCrypt;
 
 namespace Application.Services

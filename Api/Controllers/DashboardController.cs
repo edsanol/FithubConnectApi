@@ -1,11 +1,9 @@
 ﻿using Application.Commons.Bases;
 using Application.Dtos.Response;
 using Application.Interfaces;
-using Application.Services;
 using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers

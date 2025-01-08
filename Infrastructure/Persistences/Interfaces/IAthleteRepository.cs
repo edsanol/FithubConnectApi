@@ -20,5 +20,7 @@ namespace Infrastructure.Persistences.Interfaces
         Task<IEnumerable<AthleteBirthDateDto>> GetAthleteBirthDate(int gymID);
         Task<bool> CheckEmailExists(string email, int excludeAthleteId);
         Task<bool> AthleteHasAnActiveMembership(int athleteID);
+        Task<List<Athlete>> GetAllAthletesByGymID(int gymID);
+        Task<List<Athlete>> GetAllAthletesByMembershipID(List<int> membershipIDs);
     }
 }

@@ -3,7 +3,9 @@ using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
+using LinqKit;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace Infrastructure.Persistences.Repositories
 {
@@ -99,10 +101,24 @@ namespace Infrastructure.Persistences.Repositories
                                .All(am => am.EndDate < DateOnly.FromDateTime(DateTime.Now)))
                 .CountAsync();
 
+            var dateNow = DateOnly.FromDateTime(DateTime.Now);
+
             // get daily assistance
-            var dailyAssistance = await _context.Athlete
-                .Where(x => x.IdGym.Equals(gymID) && x.Status == true && x.AccessLogs.Any(al => al.AccessDateTime.Date == DateTime.Now.Date))
+            var distinctAthletesCount = await _context.AccessLog
+                .Where(x => x.IdGym == gymID 
+                    && x.AccessDateTime.Date == dateNow.ToDateTime(TimeOnly.MinValue).Date
+                    && x.AccessType != 5)
+                .Select(x => x.IdAthlete)
+                .Distinct()
                 .CountAsync();
+
+            var invitedCount = await _context.AccessLog
+                .Where(x => x.IdGym == gymID
+                    && x.AccessDateTime.Date == dateNow.ToDateTime(TimeOnly.MinValue).Date
+                    && x.AccessType == 5)
+                .CountAsync();
+
+            var dailyAssistance = distinctAthletesCount + invitedCount;
 
             // get new athletes by month
             var newAthletesByMonth = await _context.Athlete
@@ -328,7 +344,37 @@ namespace Infrastructure.Persistences.Repositories
                                 !excludedAthleteIds.Contains(x.AthleteId) ||
                                 (excludedAthleteIds.Contains(x.AthleteId) && x.AuditUpdateDate > endDate));
                         }
+                        break;
+                    case 6:
+                        if (!string.IsNullOrEmpty(filters.TextFilter))
+                        {
+                            // Dividir el filtro en una lista de IDs
+                            var membershipIds = filters.TextFilter
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(int.Parse)
+                                .ToList();
 
+                            // Filtrar por múltiples membresías
+                            athletes = athletes.Where(x => x.IdGym.Equals(gymID) &&
+                                x.AthleteMemberships.Any(am =>
+                                    membershipIds.Contains(am.IdMembershipNavigation.MembershipId) &&
+                                    am.EndDate >= DateOnly.FromDateTime(DateTime.Now)));
+                        }
+                        break;
+                    case 7:
+                        if (!string.IsNullOrEmpty(filters.TextFilter))
+                        {
+                            var filterWords = filters.TextFilter.ToLower().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                            var predicate = PredicateBuilder.New<Athlete>(false);
+                            foreach (var word in filterWords)
+                            {
+                                string lowerWord = word.ToLower();
+                                predicate = predicate.Or(x => x.AthleteName.ToLower().Contains(lowerWord) || x.AthleteLastName.ToLower().Contains(lowerWord));
+                            }
+
+                            athletes = athletes.Where(predicate);
+                        }
                         break;
                 }
             }
@@ -444,6 +490,21 @@ namespace Infrastructure.Persistences.Repositories
                 .AnyAsync(x => x.AthleteMemberships.Any(am => 
                     !string.IsNullOrEmpty(am.IdMembershipNavigation.MembershipName) &&
                     am.EndDate >= DateOnly.FromDateTime(DateTime.Now)));
+        }
+
+        public async Task<List<Athlete>> GetAllAthletesByGymID(int gymID)
+        {
+            return await _context.Athlete
+                .Where(x => x.IdGym.Equals(gymID) && x.Status == true)
+                .ToListAsync();
+        }
+
+        public async Task<List<Athlete>> GetAllAthletesByMembershipID(List<int> membershipIDs)
+        {
+            return await _context.Athlete
+                .Where(x => x.AthleteMemberships.Any(am => membershipIDs.Contains(am.IdMembership) 
+                    && am.EndDate >= DateOnly.FromDateTime(DateTime.Now)))
+                .ToListAsync();
         }
     }
 }
