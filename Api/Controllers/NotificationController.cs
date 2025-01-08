@@ -3,6 +3,8 @@ using Application.Commons.Bases;
 using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Interfaces;
+using Infrastructure.Commons.Bases.Request;
+using Infrastructure.Commons.Bases.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -50,10 +52,10 @@ namespace Api.Controllers
             return Ok(response);
         }
 
-        [HttpGet("GetChannels")]
-        public async Task<ActionResult<BaseResponse<List<ChannelResponseDto>>>> GetChannels()
+        [HttpPost("GetChannels")]
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<ChannelResponseDto>>>> GetChannels([FromBody] BaseFiltersRequest filters)
         {
-            var response = await _notificationApplication.GetChannels();
+            var response = await _notificationApplication.GetChannels(filters);
 
             return Ok(response);
         }

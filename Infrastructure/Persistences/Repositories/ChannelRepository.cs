@@ -1,4 +1,6 @@
 ﻿using Domain.Entities;
+using Infrastructure.Commons.Bases.Request;
+using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -38,14 +40,46 @@ namespace Infrastructure.Persistences.Repositories
             return response;
         }
 
-        public async Task<List<Channels>> GetChannelsByGymId(int gymId)
+        public async Task<BaseEntityResponse<Channels>> GetChannelsByGymId(BaseFiltersRequest filters, int gymId)
         {
-            var response = await _context.Channels
+            var response = new BaseEntityResponse<Channels>();
+
+            var channels = _context.Channels
                 .Include(x => x.ChannelUsers).ThenInclude(x => x.IdAthleteNavigation)
                 .Include(x => x.Notifications)
                 .Where(x => x.IdGym == gymId)
-                .AsNoTracking()
-                .ToListAsync();
+                .AsNoTracking().AsQueryable();
+
+            if (filters.NumFilter is not null && !string.IsNullOrEmpty(filters.TextFilter))
+            {
+                var filterTextLower = filters.TextFilter.ToLower();
+
+                switch (filters.NumFilter)
+                {
+                    case 1:
+                        channels = channels.Where(x => x.ChannelName.ToLower().Contains(filterTextLower));
+                        break;
+                    case 2:
+                        channels = channels.Where(x => x.ChannelUsers.Any(x => x.IdAthleteNavigation.AthleteId.Equals(Int32.Parse(filters.TextFilter))));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filters.StartDate))
+            {
+                channels = channels.Where(x => x.CreatedAt >= DateTime.Parse(filters.StartDate));
+            }
+
+            if (!string.IsNullOrEmpty(filters.EndDate))
+            {
+                channels = channels.Where(x => x.CreatedAt <= DateTime.Parse(filters.EndDate));
+            }
+
+            filters.Sort ??= "ChannelId";
+            response.TotalRecords = await channels.CountAsync();
+            response.Items = await Ordering(filters, channels, !(bool)filters.Download!).ToListAsync();
 
             return response;
         }

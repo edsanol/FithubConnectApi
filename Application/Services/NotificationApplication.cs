@@ -3,6 +3,8 @@ using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Interfaces;
 using Domain.Entities;
+using Infrastructure.Commons.Bases.Request;
+using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -17,9 +19,9 @@ namespace Application.Services
         private readonly IPushNotificationService _pushNotificationService;
 
         public NotificationApplication(
-            IUnitOfWork unitOfWork, 
-            IJwtHandler jwtHandler, 
-            DbFithubContext _context, 
+            IUnitOfWork unitOfWork,
+            IJwtHandler jwtHandler,
+            DbFithubContext _context,
             IPushNotificationService pushNotificationService
         )
         {
@@ -82,7 +84,7 @@ namespace Application.Services
                     var allAthletesByMembership = await _unitOfWork.AthleteRepository
                         .GetAllAthletesByMembershipID(userChannelRequestDto.MembershipIds);
 
-                    var athletes = allAthletesByMembership.Where(a => 
+                    var athletes = allAthletesByMembership.Where(a =>
                         !userChannelRequestDto.DeselectedUserIds.Contains(a.AthleteId)).ToList();
 
                     var channelUsers = athletes.Select(athlete => new ChannelUsers
@@ -158,7 +160,8 @@ namespace Application.Services
                     var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
                         .AddUsersToChannel(channelUsers, channel.ChannelId);
 
-                } else if (channelRequestDto.AllUsersSelected == true && channelRequestDto.AllUsersSelectedByMembersip == false)
+                }
+                else if (channelRequestDto.AllUsersSelected == true && channelRequestDto.AllUsersSelectedByMembersip == false)
                 {
                     var allAthletes = await _unitOfWork.AthleteRepository.GetAllAthletesByGymID(gymID);
 
@@ -173,12 +176,13 @@ namespace Application.Services
                     var addUsersToChannelResult = await _unitOfWork.ChannelUsersRepository
                         .AddUsersToChannel(channelUsers, channel.ChannelId);
 
-                } else if (channelRequestDto.AllUsersSelected == false && channelRequestDto.AllUsersSelectedByMembersip == true)
+                }
+                else if (channelRequestDto.AllUsersSelected == false && channelRequestDto.AllUsersSelectedByMembersip == true)
                 {
                     var allAthletesByMembership = await _unitOfWork.AthleteRepository
                         .GetAllAthletesByMembershipID(channelRequestDto.MembershipIds);
 
-                    var athletes = allAthletesByMembership.Where(a => 
+                    var athletes = allAthletesByMembership.Where(a =>
                         !channelRequestDto.DeselectedUserIds.Contains(a.AthleteId)).ToList();
 
                     var channelUsers = athletes.Select(athlete => new ChannelUsers
@@ -209,9 +213,9 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<List<ChannelResponseDto>>> GetChannels()
+        public async Task<BaseResponse<BaseEntityResponse<ChannelResponseDto>>> GetChannels(BaseFiltersRequest filters)
         {
-            var response = new BaseResponse<List<ChannelResponseDto>>();
+            var response = new BaseResponse<BaseEntityResponse<ChannelResponseDto>>();
 
             string role = _jwtHandler.GetRoleFromToken();
 
@@ -226,22 +230,31 @@ namespace Application.Services
 
             try
             {
-                var channels = await _unitOfWork.ChannelRepository.GetChannelsByGymId(gymID)
+                var channels = await _unitOfWork.ChannelRepository.GetChannelsByGymId(filters, gymID)
                     ?? throw new Exception("Error al obtener los canales");
 
-                response.IsSuccess = true;
-                response.Data = channels.Select(channel => new ChannelResponseDto
+                if (channels.Items == null)
                 {
-                    ChannelId = (int)channel.ChannelId,
-                    ChannelName = channel.ChannelName,
-                    ChannelAthletes = channel.ChannelUsers.Select(channelUser => new ChannelAthletesDto
+                    throw new Exception("Error al obtener los canales");
+                }
+
+                response.Data = new BaseEntityResponse<ChannelResponseDto>
+                {
+                    TotalRecords = channels.TotalRecords,
+                    Items = channels.Items.Select(c => new ChannelResponseDto
                     {
-                        AthleteId = channelUser.IdAthlete,
-                        AthleteName = channelUser.IdAthleteNavigation.AthleteName + " " + channelUser.IdAthleteNavigation.AthleteLastName
-                            ?? string.Empty
-                    }).ToList(),
-                    LastMessage = channel.Notifications.OrderByDescending(n => n.SendAt).FirstOrDefault()?.Message ?? string.Empty
-                }).ToList().OrderByDescending(c => c.LastMessage).ToList();
+                        ChannelId = c.ChannelId,
+                        ChannelName = c.ChannelName,
+                        ChannelAthletes = c.ChannelUsers.Select(u => new ChannelAthletesDto
+                        {
+                            AthleteId = u.IdAthlete,
+                            AthleteName = u.IdAthleteNavigation?.AthleteName ?? string.Empty
+                        }).ToList(),
+                        LastMessage = c.Notifications.OrderByDescending(n => n.SendAt).FirstOrDefault()?.Message ?? string.Empty
+                    }).ToList()
+                };
+
+                response.IsSuccess = true;
 
                 response.IsSuccess = true;
                 response.Message = "Canales obtenidos correctamente";
