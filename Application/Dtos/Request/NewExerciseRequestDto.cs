@@ -7,5 +7,6 @@
         public int Duration { get; set; }
         public string VideoURL { get; set; } = string.Empty;
         public string ImageURL { get; set; } = string.Empty;
+        public long? IdMuscleGroup { get; set; }
     }
 }

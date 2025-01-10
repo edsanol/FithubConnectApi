@@ -23,6 +23,11 @@ namespace Infrastructure.Persistences.Contexts.Configurations
                 .HasForeignKey(d => d.IdGym)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("t_exercise_gymid_fkey");
+
+            builder.HasOne(d => d.IdMuscleGroupNavigation)
+                .WithMany(p => p.Exercises)
+                .HasForeignKey(d => d.IdMuscleGroup)
+                .HasConstraintName("t_exercise_muscleid_fkey");
         }
     }
 }

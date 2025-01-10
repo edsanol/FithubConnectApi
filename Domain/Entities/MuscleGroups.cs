@@ -13,5 +13,7 @@
         public DateTime UpdatedAt { get; set; }
 
         public virtual ICollection<Routines> Routines { get; set; } = new List<Routines>();
+
+        public virtual ICollection<Exercises>? Exercises { get; set; } = new List<Exercises>();
     }
 }

@@ -16,11 +16,15 @@
 
         public int IdGym { get; set; }
 
+        public long? IdMuscleGroup { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }
 
         public virtual Gym IdGymNavigation { get; set; } = null!;
+
+        public virtual MuscleGroups IdMuscleGroupNavigation { get; set; } = null!;
 
         public virtual ICollection<RoutineExercises> RoutineExercises { get; set; } = new List<RoutineExercises>();
     }
