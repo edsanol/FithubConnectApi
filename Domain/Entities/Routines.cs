@@ -23,5 +23,7 @@
         public virtual Gym IdGymNavigation { get; set; } = null!;
 
         public virtual ICollection<RoutineExercises> RoutineExercises { get; set; } = new List<RoutineExercises>();
+
+        public virtual ICollection<AthleteRoutines> AthleteRoutines { get; set; } = new List<AthleteRoutines>();
     }
 }

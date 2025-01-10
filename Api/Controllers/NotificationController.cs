@@ -67,7 +67,6 @@ namespace Api.Controllers
 
             if (response.IsSuccess)
             {
-                // Notificamos a todos en el grupo con Id == dto.ChannelId
                 await _hubContext.Clients.Group(notificationRequestDto.ChannelId.ToString())
                     .SendAsync("ReceiveMessage", notificationRequestDto.ChannelId, notificationRequestDto.Message);
             }

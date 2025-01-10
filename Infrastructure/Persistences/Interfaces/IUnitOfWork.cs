@@ -26,6 +26,11 @@
         IChannelUsersRepository ChannelUsersRepository { get; }
         INotificationRepository NotificationRepository { get; }
         IUserDeviceTokenRepository UserDeviceTokenRepository { get; }
+        IRoutineRepository RoutineRepository { get; }
+        IExerciseRepository ExerciseRepository { get; }
+        IRoutineExerciseRepository RoutineExerciseRepository { get; }
+        IRoutineExerciseSetsRepository RoutineExerciseSetsRepository { get; }
+        IAthleteRoutineRepository AthleteRoutineRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();

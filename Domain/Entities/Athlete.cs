@@ -57,4 +57,6 @@ public partial class Athlete
     public virtual ICollection<ChannelUsers> ChannelUsers { get; set; } = new List<ChannelUsers>();
 
     public virtual ICollection<UserDeviceToken> UserDeviceTokens { get; set; } = new List<UserDeviceToken>();
+
+    public virtual ICollection<AthleteRoutines> AthleteRoutines { get; set; } = new List<AthleteRoutines>();
 }

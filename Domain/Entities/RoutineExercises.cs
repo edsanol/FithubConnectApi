@@ -10,12 +10,6 @@
 
         public int Order { get; set; }
 
-        public int Sets { get; set; }
-
-        public int Reps { get; set; }
-
-        public float Weight { get; set; }
-
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }
@@ -23,5 +17,7 @@
         public virtual Exercises IdExerciseNavigation { get; set; } = null!;
 
         public virtual Routines IdRoutineNavigation { get; set; } = null!;
+
+        public virtual ICollection<RoutineExerciseSets> RoutineExerciseSets { get; set; } = new List<RoutineExerciseSets>();
     }
 }
