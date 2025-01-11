@@ -14,6 +14,8 @@
 
         public DateTime UpdatedAt { get; set; }
 
+        public bool IsActive { get; set; }
+
         public virtual Exercises IdExerciseNavigation { get; set; } = null!;
 
         public virtual Routines IdRoutineNavigation { get; set; } = null!;

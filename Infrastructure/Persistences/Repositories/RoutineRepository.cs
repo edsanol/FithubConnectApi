@@ -4,7 +4,6 @@ using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Channels;
 
 namespace Infrastructure.Persistences.Repositories
 {
@@ -21,6 +20,14 @@ namespace Infrastructure.Persistences.Repositories
         {
             await _context.Routines.AddAsync(routine);
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<Routines> GetRoutineById(long routineId)
+        {
+            var routine = await _context.Routines
+                .FirstOrDefaultAsync(x => x.RoutineId == routineId);
+
+            return routine ?? new Routines();
         }
 
         public async Task<BaseEntityResponse<Routines>> GetRoutinesByAthleteIdList(BaseFiltersRequest filters, int athleteId)
@@ -141,6 +148,12 @@ namespace Infrastructure.Persistences.Repositories
             response.Items = await Ordering(filters, routines, !(bool)filters.Download!).ToListAsync();
 
             return response;
+        }
+
+        public async Task<bool> UpdateRoutine(Routines routine)
+        {
+            _context.Routines.Update(routine);
+            return await _context.SaveChangesAsync() > 0;
         }
     }
 }

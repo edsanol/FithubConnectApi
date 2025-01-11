@@ -15,5 +15,6 @@ namespace Application.Interfaces
         Task<BaseResponse<bool>> UpdateExercise(UpdateExerciseRequestDto updateExerciseRequestDto);
         Task<BaseResponse<bool>> DeleteExercise(long exerciseId);
         Task<BaseResponse<BaseEntityResponse<RoutinesResponseDto>>> GetRoutinesByAthleteIdList(BaseFiltersRequest filters, int athleteId);
+        Task<BaseResponse<bool>> UpdateRoutine(UpdateRoutineRequestDto updateRoutineRequestDto);
     }
 }

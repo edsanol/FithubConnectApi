@@ -9,5 +9,7 @@ namespace Infrastructure.Persistences.Interfaces
         Task<bool> CreateRoutine(Routines routine);
         Task<BaseEntityResponse<Routines>> GetRoutinesListByGymId(BaseFiltersRequest filters, int gymId);
         Task<BaseEntityResponse<Routines>> GetRoutinesByAthleteIdList(BaseFiltersRequest filters, int athleteId);
+        Task<Routines> GetRoutineById(long routineId);
+        Task<bool> UpdateRoutine(Routines routine);
     }
 }

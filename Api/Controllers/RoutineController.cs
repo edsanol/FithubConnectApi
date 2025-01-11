@@ -105,5 +105,17 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpPut("UpdateRoutine")]
+        public async Task<ActionResult<BaseResponse<bool>>> UpdateRoutine([FromBody] UpdateRoutineRequestDto updateRoutineRequestDto)
+        {
+            var response = await _routineApplication.UpdateRoutine(updateRoutineRequestDto);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
     }
 }
