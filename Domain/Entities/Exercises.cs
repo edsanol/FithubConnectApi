@@ -22,6 +22,8 @@
 
         public DateTime UpdatedAt { get; set; }
 
+        public bool IsActive { get; set; }
+
         public virtual Gym IdGymNavigation { get; set; } = null!;
 
         public virtual MuscleGroups IdMuscleGroupNavigation { get; set; } = null!;

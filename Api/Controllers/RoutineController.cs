@@ -56,5 +56,54 @@ namespace Api.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("GetExercisesList")]
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<ExercisesResponseDto>>>> GetExercisesList([FromBody] BaseFiltersRequest filters)
+        {
+            var response = await _routineApplication.GetExercisesList(filters);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPut("UpdateExercise")]
+        public async Task<ActionResult<BaseResponse<bool>>> UpdateExercise([FromBody] UpdateExerciseRequestDto updateExerciseRequestDto)
+        {
+            var response = await _routineApplication.UpdateExercise(updateExerciseRequestDto);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPut("DeleteExercise/{exerciseId:int}")]
+        public async Task<ActionResult<BaseResponse<bool>>> DeleteExercise(int exerciseId)
+        {
+            var response = await _routineApplication.DeleteExercise(exerciseId);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("GetRoutinesByAthleteIdList")]
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<RoutinesResponseDto>>>> 
+            GetRoutinesByAthleteIdList([FromBody] BaseFiltersRequest filters, [FromQuery] int athleteId = 0)
+        {
+            var response = await _routineApplication.GetRoutinesByAthleteIdList(filters, athleteId);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
     }
 }

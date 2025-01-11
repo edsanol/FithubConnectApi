@@ -18,6 +18,8 @@
 
         public DateTime UpdatedAt { get; set; }
 
+        public bool IsActive { get; set; }
+
         public virtual MuscleGroups IdMuscleGroupNavigation { get; set; } = null!;
 
         public virtual Gym IdGymNavigation { get; set; } = null!;

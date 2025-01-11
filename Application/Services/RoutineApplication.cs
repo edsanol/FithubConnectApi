@@ -7,6 +7,7 @@ using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Infrastructure.Persistences.Contexts;
 using Infrastructure.Persistences.Interfaces;
+using Utilities.Static;
 
 namespace Application.Services
 {
@@ -47,7 +48,8 @@ namespace Application.Services
                     IdGym = gymID,
                     IdMuscleGroup = createExerciseRequestDto.IdMuscleGroup ?? null,
                     CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    UpdatedAt = DateTime.Now,
+                    IsActive = true
                 };
                 var exerciseCreated = await _unitOfWork.ExerciseRepository.CreateExercise(exercise);
                 if (!exerciseCreated)
@@ -106,7 +108,8 @@ namespace Application.Services
                     ImageURL = createRoutineRequestDto.ImageURL,
                     IdGym = gymID,
                     CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    UpdatedAt = DateTime.Now,
+                    IsActive = true
                 };
 
                 var routineCreated = await _unitOfWork.RoutineRepository.CreateRoutine(routine);
@@ -140,7 +143,8 @@ namespace Application.Services
                             IdGym = gymID,
                             IdMuscleGroup = exerciseDto.NewExercise.IdMuscleGroup ?? null,
                             CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now
+                            UpdatedAt = DateTime.Now,
+                            IsActive = true
                         };
 
                         var exerciseCreated = await _unitOfWork.ExerciseRepository.CreateExercise(newExercise);
@@ -250,6 +254,170 @@ namespace Application.Services
             return response;
         }
 
+        public async Task<BaseResponse<bool>> DeleteExercise(long exerciseId)
+        {
+            var response = new BaseResponse<bool>();
+            string role = _jwtHandler.GetRoleFromToken();
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            try
+            {
+                var exerciseDeleted = await _unitOfWork.ExerciseRepository.DeleteExercise(exerciseId);
+                if (!exerciseDeleted)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "No se pudo eliminar el ejercicio.";
+                    return response;
+                }
+
+                response.IsSuccess = true;
+                response.Message = "El ejercicio fue eliminado exitosamente.";
+                response.Data = true;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<BaseEntityResponse<ExercisesResponseDto>>> GetExercisesList(BaseFiltersRequest filters)
+        {
+            var response = new BaseResponse<BaseEntityResponse<ExercisesResponseDto>>();
+            string role = _jwtHandler.GetRoleFromToken();
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            try
+            {
+                var exercises = await _unitOfWork.ExerciseRepository.GetExercisesListByGymId(filters, gymID);
+
+                if (exercises.Items == null)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "No se encontraron ejercicios.";
+                    return response;
+                }
+
+                var exercisesResponse = new BaseEntityResponse<ExercisesResponseDto>
+                {
+                    TotalRecords = exercises.TotalRecords,
+                    Items = exercises.Items.Select(exercise => new ExercisesResponseDto
+                    {
+                        ExerciseId = exercise.ExerciseId,
+                        ExerciseTitle = exercise.ExerciseTitle,
+                        ExerciseDescription = exercise.ExerciseDescription,
+                        Duration = exercise.Duration,
+                        VideoURL = exercise.VideoURL,
+                        ImageURL = exercise.ImageURL,
+                        IdMuscleGroup = exercise.IdMuscleGroup,
+                        MuscleGroupName = exercise.IdMuscleGroupNavigation != null ? exercise.IdMuscleGroupNavigation.MuscleGroupName : null
+                    }).ToList()
+                };
+
+                response.IsSuccess = true;
+                response.Data = exercisesResponse;
+                response.Message = "Lista de ejercicios obtenida exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+
+        public async Task<BaseResponse<BaseEntityResponse<RoutinesResponseDto>>> GetRoutinesByAthleteIdList(BaseFiltersRequest filters, int athleteId)
+        {
+            var response = new BaseResponse<BaseEntityResponse<RoutinesResponseDto>>();
+            string role = _jwtHandler.GetRoleFromToken();
+            var userId = _jwtHandler.ExtractIdFromToken();
+
+            if (role == "deportista")
+            {
+                athleteId = userId;
+            }
+            else if (role == "gimnasio" && athleteId > 0)
+            {
+                bool hasAthlete = await _unitOfWork.GymRepository.HasAthleteByAthleteID(userId, athleteId);
+                if (!hasAthlete)
+                {
+                    response.IsSuccess = false;
+                    response.Message = ReplyMessage.MESSAGE_QUERY_EMPTY;
+                    return response;
+                }
+            }
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+
+            try
+            {
+                var routines = await _unitOfWork.RoutineRepository.GetRoutinesByAthleteIdList(filters, athleteId);
+
+                var routinesResponse = new BaseEntityResponse<RoutinesResponseDto>
+                {
+                    TotalRecords = routines.TotalRecords,
+                    Items = routines.Items.Select(routine => new RoutinesResponseDto
+                    {
+                        RoutineId = routine.RoutineId,
+                        Title = routine.Title,
+                        Description = routine.Description,
+                        IdMuscleGroup = routine.IdMuscleGroup,
+                        MuscleGroupName = routine.IdMuscleGroupNavigation.MuscleGroupName,
+                        ImageURL = routine.ImageURL,
+                        IsActive = routine.IsActive,
+                        Exercises = routine.RoutineExercises.Select(exercise => new RoutineExerciseResponseDto
+                        {
+                            RoutineExerciseId = exercise.RoutineExerciseId,
+                            IdExercise = exercise.IdExercise,
+                            ExerciseTitle = exercise.IdExerciseNavigation.ExerciseTitle,
+                            ExerciseDescription = exercise.IdExerciseNavigation.ExerciseDescription,
+                            Duration = exercise.IdExerciseNavigation.Duration,
+                            VideoURL = exercise.IdExerciseNavigation.VideoURL,
+                            ImageURL = exercise.IdExerciseNavigation.ImageURL,
+                            RoutineExerciseSets = exercise.RoutineExerciseSets.Select(set => new RoutineExerciseSetsResponseDto
+                            {
+                                RoutineExerciseSetId = set.RoutineExerciseSetId,
+                                SetNumber = set.SetNumber,
+                                Reps = set.Reps,
+                                Weight = set.Weight
+                            }).ToList()
+                        }).ToList()
+                    }).ToList()
+                };
+
+                response.IsSuccess = true;
+                response.Data = routinesResponse;
+                response.Message = "Lista de rutinas obtenida exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
+            return response;
+        }
+
         public async Task<BaseResponse<BaseEntityResponse<RoutinesResponseDto>>> GetRoutinesList(BaseFiltersRequest filters)
         {
             var response = new BaseResponse<BaseEntityResponse<RoutinesResponseDto>>();
@@ -278,6 +446,7 @@ namespace Application.Services
                         IdMuscleGroup = routine.IdMuscleGroup,
                         MuscleGroupName = routine.IdMuscleGroupNavigation.MuscleGroupName,
                         ImageURL = routine.ImageURL,
+                        IsActive = routine.IsActive,
                         Exercises = routine.RoutineExercises.Select(exercise => new RoutineExerciseResponseDto
                         {
                             RoutineExerciseId = exercise.RoutineExerciseId,
@@ -317,6 +486,59 @@ namespace Application.Services
                 response.IsSuccess = false;
                 response.Message = ex.Message;
             }
+            return response;
+        }
+
+        public async Task<BaseResponse<bool>> UpdateExercise(UpdateExerciseRequestDto updateExerciseRequestDto)
+        {
+            var response = new BaseResponse<bool>();
+            string role = _jwtHandler.GetRoleFromToken();
+            if (role != "gimnasio")
+            {
+                response.IsSuccess = false;
+                response.Message = "No autorizado";
+                return response;
+            }
+            var gymID = _jwtHandler.ExtractIdFromToken();
+
+            try
+            {
+                var exercise = await _unitOfWork.ExerciseRepository.GetExerciseById(updateExerciseRequestDto.ExerciseId);
+
+                if (exercise == null || exercise.IdGym != gymID)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "El ejercicio no existe o no pertenece a este gimnasio.";
+                    return response;
+                }
+
+                exercise.ExerciseTitle = updateExerciseRequestDto.ExerciseTitle;
+                exercise.ExerciseDescription = updateExerciseRequestDto.ExerciseDescription;
+                exercise.Duration = updateExerciseRequestDto.Duration;
+                exercise.VideoURL = updateExerciseRequestDto.VideoURL;
+                exercise.ImageURL = updateExerciseRequestDto.ImageURL;
+                exercise.IdMuscleGroup = updateExerciseRequestDto.IdMuscleGroup ?? null;
+                exercise.UpdatedAt = DateTime.Now;
+                exercise.IsActive = updateExerciseRequestDto.IsActive;
+
+                var exerciseUpdated = await _unitOfWork.ExerciseRepository.UpdateExercise(exercise);
+                if (!exerciseUpdated)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "No se pudo actualizar el ejercicio.";
+                    return response;
+                }
+
+                response.IsSuccess = true;
+                response.Message = "El ejercicio fue actualizado exitosamente.";
+                response.Data = true;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+
             return response;
         }
     }
