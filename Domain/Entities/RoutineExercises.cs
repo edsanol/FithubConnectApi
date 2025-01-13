@@ -22,9 +22,6 @@
 
         public virtual ICollection<RoutineExerciseSets> RoutineExerciseSets { get; set; } = new List<RoutineExerciseSets>();
 
-        public static implicit operator RoutineExercises(bool v)
-        {
-            throw new NotImplementedException();
-        }
+        public virtual ICollection<HistoricalSets> HistoricalSets { get; set; } = new List<HistoricalSets>();
     }
 }

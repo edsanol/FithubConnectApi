@@ -86,6 +86,8 @@ public partial class DbFithubContext : DbContext
 
     public virtual DbSet<RoutineExerciseSets> RoutineExerciseSets { get; set; }
 
+    public virtual DbSet<HistoricalSets> HistoricalSets { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasAnnotation("Relational:Collation", "Modern_Spanish_CI_AS");

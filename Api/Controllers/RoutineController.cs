@@ -94,7 +94,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("GetRoutinesByAthleteIdList")]
-        public async Task<ActionResult<BaseResponse<BaseEntityResponse<RoutinesResponseDto>>>> 
+        public async Task<ActionResult<BaseResponse<BaseEntityResponse<RoutinesResponseDto>>>>
             GetRoutinesByAthleteIdList([FromBody] BaseFiltersRequest filters, [FromQuery] int athleteId = 0)
         {
             var response = await _routineApplication.GetRoutinesByAthleteIdList(filters, athleteId);
@@ -110,6 +110,78 @@ namespace Api.Controllers
         public async Task<ActionResult<BaseResponse<bool>>> UpdateRoutine([FromBody] UpdateRoutineRequestDto updateRoutineRequestDto)
         {
             var response = await _routineApplication.UpdateRoutine(updateRoutineRequestDto);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPut("DeleteRoutine/{routineId:int}")]
+        public async Task<ActionResult<BaseResponse<bool>>> DeleteRoutine(int routineId)
+        {
+            var response = await _routineApplication.DeleteRoutine(routineId);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetRoutineById/{routineId:int}")]
+        public async Task<ActionResult<BaseResponse<RoutinesResponseDto>>> GetRoutineById(int routineId)
+        {
+            var response = await _routineApplication.GetRoutineById(routineId);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpGet("GetMuscleGroups")]
+        public async Task<ActionResult<BaseResponse<List<MuscleGroupsResponseDto>>>> GetMuscleGroups()
+        {
+            var response = await _routineApplication.GetMuscleGroups();
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("SendRoutineToChannel")]
+        public async Task<ActionResult<BaseResponse<bool>>> SendRoutineToChannel([FromBody] SendRoutineToChannelRequestDto sendRoutineToChannelRequestDto)
+        {
+            var response = await _routineApplication.SendRoutineToChannel(sendRoutineToChannelRequestDto);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPut("DesactivateRoutineToAthlete")]
+        public async Task<ActionResult<BaseResponse<bool>>> DesactivateRoutine(int routineId, int athleteId)
+        {
+            var response = await _routineApplication.DesactivateRoutineToAthlete(routineId, athleteId);
+            if (response.IsSuccess == false)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        [HttpPost("InsertAthleteHistoricalSets")]
+        public async Task<ActionResult<BaseResponse<bool>>> InsertAthleteHistoricalSets([FromBody] InsertAthleteHistoricalSetsRequestDto request)
+        {
+            var response = await _routineApplication.InsertAthleteHistoricalSets(request);
             if (response.IsSuccess == false)
             {
                 return BadRequest(response);

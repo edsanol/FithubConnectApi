@@ -16,5 +16,11 @@ namespace Application.Interfaces
         Task<BaseResponse<bool>> DeleteExercise(long exerciseId);
         Task<BaseResponse<BaseEntityResponse<RoutinesResponseDto>>> GetRoutinesByAthleteIdList(BaseFiltersRequest filters, int athleteId);
         Task<BaseResponse<bool>> UpdateRoutine(UpdateRoutineRequestDto updateRoutineRequestDto);
+        Task<BaseResponse<bool>> DeleteRoutine(long routineId);
+        Task<BaseResponse<RoutinesResponseDto>> GetRoutineById(long routineId);
+        Task<BaseResponse<List<MuscleGroupsResponseDto>>> GetMuscleGroups();
+        Task<BaseResponse<bool>> SendRoutineToChannel(SendRoutineToChannelRequestDto sendRoutineToChannelRequestDto);
+        Task<BaseResponse<bool>> DesactivateRoutineToAthlete(long routneId, int athleteId);
+        Task<BaseResponse<bool>> InsertAthleteHistoricalSets(InsertAthleteHistoricalSetsRequestDto request);
     }
 }

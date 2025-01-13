@@ -22,6 +22,23 @@ namespace Infrastructure.Persistences.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
+        public async Task<bool> DeleteRoutine(long exerciseId)
+        {
+            var routine = await _context.Routines.AsNoTracking()
+                .SingleOrDefaultAsync(x => x.RoutineId == exerciseId);
+
+            if (routine is not null)
+            {
+                routine.IsActive = false;
+                routine.UpdatedAt = DateTime.Now;
+                _context.Update(routine);
+                var recordsAffected = await _context.SaveChangesAsync();
+                return recordsAffected > 0;
+            }
+
+            return false;
+        }
+
         public async Task<Routines> GetRoutineById(long routineId)
         {
             var routine = await _context.Routines
@@ -30,15 +47,34 @@ namespace Infrastructure.Persistences.Repositories
             return routine ?? new Routines();
         }
 
+        public async Task<Routines> GetRoutineByRoutineId(long routineId)
+        {
+            var routines = _context.Routines
+                .Include(m => m.IdMuscleGroupNavigation)
+                .Include(re => re.RoutineExercises.Where(re => re.IsActive))
+                    .ThenInclude(e => e.IdExerciseNavigation)
+                .Include(re => re.RoutineExercises)
+                    .ThenInclude(res => res.RoutineExerciseSets.Where(res => res.IsActive))
+                .Include(ae => ae.AthleteRoutines)
+                    .ThenInclude(a => a.IdAthleteNavigation)
+                    .AsNoTracking().AsQueryable();
+
+            return await routines.FirstOrDefaultAsync(x => x.RoutineId == routineId)
+                ?? new Routines();
+        }
+
         public async Task<BaseEntityResponse<Routines>> GetRoutinesByAthleteIdList(BaseFiltersRequest filters, int athleteId)
         {
             var response = new BaseEntityResponse<Routines>();
 
             var routines = _context.Routines
                 .Include(m => m.IdMuscleGroupNavigation)
-                .Include(re => re.RoutineExercises).ThenInclude(e => e.IdExerciseNavigation)
-                .Include(re => re.RoutineExercises).ThenInclude(res => res.RoutineExerciseSets)
-                .Include(ae => ae.AthleteRoutines).ThenInclude(a => a.IdAthleteNavigation)
+                .Include(re => re.RoutineExercises.Where(re => re.IsActive))
+                    .ThenInclude(e => e.IdExerciseNavigation)
+                .Include(re => re.RoutineExercises)
+                    .ThenInclude(res => res.RoutineExerciseSets.Where(res => res.IsActive))
+                .Include(ae => ae.AthleteRoutines)
+                    .ThenInclude(a => a.IdAthleteNavigation)
                 .Where(x => x.AthleteRoutines.Any(a => a.IdAthlete == athleteId))
                 .AsNoTracking().AsQueryable();
 
@@ -67,6 +103,10 @@ namespace Infrastructure.Persistences.Repositories
                     case 6:
                         routines = routines.Where(x => x.IdMuscleGroupNavigation.MuscleGroupId.Equals(Int32.Parse(filters.TextFilter))
                                                    && x.IsActive.Equals(true));
+                        break;
+                    case 7:
+                        routines = routines.Where(x => x.AthleteRoutines.Any(ar =>
+                            !ar.Status.Equals("Inactive", StringComparison.OrdinalIgnoreCase)) && x.IsActive.Equals(true));
                         break;
                     default:
                         break;

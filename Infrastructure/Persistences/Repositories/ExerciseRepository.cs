@@ -78,6 +78,17 @@ namespace Infrastructure.Persistences.Repositories
                         exercises = exercises.Where(x => x.IdMuscleGroupNavigation.MuscleGroupId.Equals(Int32.Parse(filters.TextFilter)) 
                             && x.IsActive.Equals(true));
                         break;
+                    case 7:
+                        if (!string.IsNullOrEmpty(filters.TextFilter))
+                        {
+                            var exerciseIds = filters.TextFilter
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                .Select(long.Parse)
+                                .ToList();
+
+                            exercises = exercises.Where(x => exerciseIds.Contains(x.ExerciseId));
+                        }
+                        break;
                     default:
                         break;
                 }

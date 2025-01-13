@@ -26,5 +26,17 @@ namespace Infrastructure.Persistences.Repositories
                 .Where(x => x.IdRoutine == routineId && athleteIds.Contains(x.IdAthlete))
                 .ToListAsync();
         }
+
+        public async Task<AthleteRoutines> GetAthleteRoutineByRoutineAndAthlete(long routineId, int athleteId)
+        {
+            return await _context.AthleteRoutines
+                .FirstOrDefaultAsync(x => x.IdRoutine == routineId && x.IdAthlete == athleteId) ?? new AthleteRoutines();
+        }
+
+        public async Task<bool> UpdateAthleteRoutine(AthleteRoutines athleteRoutine)
+        {
+            _context.AthleteRoutines.Update(athleteRoutine);
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

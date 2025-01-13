@@ -31,6 +31,8 @@
         IRoutineExerciseRepository RoutineExerciseRepository { get; }
         IRoutineExerciseSetsRepository RoutineExerciseSetsRepository { get; }
         IAthleteRoutineRepository AthleteRoutineRepository { get; }
+        IMuscleGroupRepository MuscleGroupRepository { get; }
+        IHistoricalSetsRepository HistoricalSetsRepository { get; }
 
         void SaveChanges();
         Task SaveChangeAsync();

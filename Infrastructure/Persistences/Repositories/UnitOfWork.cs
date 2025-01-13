@@ -61,6 +61,10 @@ namespace Infrastructure.Persistences.Repositories
 
         public IAthleteRoutineRepository AthleteRoutineRepository { get; private set; }
 
+        public IMuscleGroupRepository MuscleGroupRepository { get; private set; }
+
+        public IHistoricalSetsRepository HistoricalSetsRepository { get; private set; }
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -91,6 +95,8 @@ namespace Infrastructure.Persistences.Repositories
             RoutineExerciseRepository = new RoutineExerciseRepository(_context) ?? throw new ArgumentNullException(nameof(RoutineExerciseRepository));
             RoutineExerciseSetsRepository = new RoutineExerciseSetsRepository(_context) ?? throw new ArgumentNullException(nameof(RoutineExerciseSetsRepository));
             AthleteRoutineRepository = new AthleteRoutineRepository(_context) ?? throw new ArgumentNullException(nameof(AthleteRoutineRepository));
+            MuscleGroupRepository = new MuscleGroupRepository(_context) ?? throw new ArgumentNullException(nameof(MuscleGroupRepository));
+            HistoricalSetsRepository = new HistoricalSetsRepository(_context) ?? throw new ArgumentNullException(nameof(HistoricalSetsRepository));
         }
 
         public void Dispose()
