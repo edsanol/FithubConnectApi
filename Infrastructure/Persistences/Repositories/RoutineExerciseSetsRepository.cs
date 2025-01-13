@@ -42,5 +42,18 @@ namespace Infrastructure.Persistences.Repositories
 
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task<RoutineExerciseSets> GetRoutineExerciseSetsByIdAsync(long id)
+        {
+            return await _context.RoutineExerciseSets
+                .Include(x => x.IdRoutineExerciseNavigation)
+                .FirstOrDefaultAsync(x => x.RoutineExerciseSetId == id);
+        }
+
+        public async Task<bool> UpdateRoutineExerciseSets(RoutineExerciseSets routineExerciseSets)
+        {
+            _context.RoutineExerciseSets.Update(routineExerciseSets);
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

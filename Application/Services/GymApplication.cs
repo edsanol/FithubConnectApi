@@ -413,10 +413,11 @@ namespace Application.Services
                     var encryptedIdBase64 = Convert.ToBase64String(encryptedIdBytes);
 
                     var encryptedId = _cryptographyApplication.EncryptWithAes(encryptedIdBase64, key, iv);
+                    var safeEncryptedId = Uri.EscapeDataString(encryptedId);
 
                     response.Data.Token = await _jwtHandler.GenerateToken(gym);
                     response.Data.RefreshToken = await _jwtHandler.GenerateRefreshToken(gym);
-                    response.Data.EncryptedId = encryptedId;
+                    response.Data.EncryptedId = safeEncryptedId;
                     response.Message = ReplyMessage.MESSAGE_LOGIN;
 
                     bool result = await RefreshTokenLogic(gym.GymId, response.Data.RefreshToken);

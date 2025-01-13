@@ -96,10 +96,14 @@ namespace Infrastructure.Persistences.Repositories
 
             var routines = _context.Routines
                 .Include(m => m.IdMuscleGroupNavigation)
-                .Include(re => re.RoutineExercises).ThenInclude(e => e.IdExerciseNavigation)
-                .Include(re => re.RoutineExercises).ThenInclude(res => res.RoutineExerciseSets)
-                .Include(ae => ae.AthleteRoutines).ThenInclude(a => a.IdAthleteNavigation)
-                .Where(x => x.IdGym == gymId)
+                .Include(re => re.RoutineExercises.Where(re => re.IsActive))
+                    .ThenInclude(e => e.IdExerciseNavigation)
+                .Include(re => re.RoutineExercises)
+                    .ThenInclude(res => res.RoutineExerciseSets.Where(res => res.IsActive))
+                .Include(ae => ae.AthleteRoutines)
+                    .ThenInclude(a => a.IdAthleteNavigation)
+                .Where(x => x.IdGym == gymId 
+                    && x.RoutineExercises.Any(re => re.IdExerciseNavigation.IsActive))
                 .AsNoTracking().AsQueryable();
 
             if (filters.NumFilter is not null && !string.IsNullOrEmpty(filters.TextFilter))

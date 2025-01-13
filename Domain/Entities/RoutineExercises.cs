@@ -21,5 +21,10 @@
         public virtual Routines IdRoutineNavigation { get; set; } = null!;
 
         public virtual ICollection<RoutineExerciseSets> RoutineExerciseSets { get; set; } = new List<RoutineExerciseSets>();
+
+        public static implicit operator RoutineExercises(bool v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

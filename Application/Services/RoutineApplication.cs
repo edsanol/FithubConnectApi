@@ -201,47 +201,47 @@ namespace Application.Services
                     }
                 }
 
-                var athletesByChannel = await _unitOfWork.ChannelUsersRepository.GetAllAthleteIdsByChannel(createRoutineRequestDto.IdChannel);
+                //var athletesByChannel = await _unitOfWork.ChannelUsersRepository.GetAllAthleteIdsByChannel(createRoutineRequestDto.IdChannel);
 
-                var existingAssignments = await _unitOfWork.AthleteRoutineRepository.GetAssignmentsByRoutineAndAthletes(
-                    routine.RoutineId, athletesByChannel
-                );
+                //var existingAssignments = await _unitOfWork.AthleteRoutineRepository.GetAssignmentsByRoutineAndAthletes(
+                //    routine.RoutineId, athletesByChannel
+                //);
 
-                var existingAssignmentsSet = new HashSet<(int athleteId, long routineId)>(
-                    existingAssignments.Select(a => (a.IdAthlete, a.IdRoutine))
-                );
+                //var existingAssignmentsSet = new HashSet<(int athleteId, long routineId)>(
+                //    existingAssignments.Select(a => (a.IdAthlete, a.IdRoutine))
+                //);
 
-                var athleteRoutines = new List<AthleteRoutines>();
+                //var athleteRoutines = new List<AthleteRoutines>();
 
-                foreach (var athleteId in athletesByChannel)
-                {
-                    if (existingAssignmentsSet.Contains((athleteId, routine.RoutineId)))
-                    {
-                        continue;
-                    }
+                //foreach (var athleteId in athletesByChannel)
+                //{
+                //    if (existingAssignmentsSet.Contains((athleteId, routine.RoutineId)))
+                //    {
+                //        continue;
+                //    }
 
-                    var athleteRoutine = new AthleteRoutines
-                    {
-                        IdAthlete = athleteId,
-                        IdRoutine = routine.RoutineId,
-                        Status = "Active",
-                        StartDate = createRoutineRequestDto.StartDate,
-                        EndDate = createRoutineRequestDto.EndDate,
-                        CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
-                    };
+                //    var athleteRoutine = new AthleteRoutines
+                //    {
+                //        IdAthlete = athleteId,
+                //        IdRoutine = routine.RoutineId,
+                //        Status = "Active",
+                //        StartDate = createRoutineRequestDto.StartDate,
+                //        EndDate = createRoutineRequestDto.EndDate,
+                //        CreatedAt = DateTime.Now,
+                //        UpdatedAt = DateTime.Now
+                //    };
 
-                    athleteRoutines.Add(athleteRoutine);
-                }
+                //    athleteRoutines.Add(athleteRoutine);
+                //}
 
-                if (athleteRoutines.Any())
-                {
-                    var athleteRoutineCreated = await _unitOfWork.AthleteRoutineRepository.CreateAthleteRoutine(athleteRoutines);
-                    if (!athleteRoutineCreated)
-                    {
-                        throw new Exception("No se pudieron crear las asignaciones de rutina para los atletas.");
-                    }
-                }
+                //if (athleteRoutines.Any())
+                //{
+                //    var athleteRoutineCreated = await _unitOfWork.AthleteRoutineRepository.CreateAthleteRoutine(athleteRoutines);
+                //    if (!athleteRoutineCreated)
+                //    {
+                //        throw new Exception("No se pudieron crear las asignaciones de rutina para los atletas.");
+                //    }
+                //}
 
                 await transaction.CommitAsync();
 
@@ -624,86 +624,125 @@ namespace Application.Services
                     }
                 }
 
-                // Procesar ejercicios nuevos o actualizados
-                foreach (var exerciseDto in updateRoutineDto.Exercises)
+                if (updateRoutineDto.Exercises != null)
                 {
-                    long exerciseId;
-
-                    if (exerciseDto.IdExercise.HasValue)
+                    foreach (var exerciseDto in updateRoutineDto.Exercises)
                     {
-                        // Validar que el ejercicio existe y pertenece al gimnasio
-                        var existingExercise = await _unitOfWork.ExerciseRepository.GetExerciseById(exerciseDto.IdExercise.Value);
-                        if (existingExercise == null || existingExercise.IdGym != gymID)
+                        // 5.1) Validar/Crear el ejercicio en la tabla Exercises
+                        if (exerciseDto.NewExercise != null)
                         {
-                            throw new Exception($"El ejercicio con ID {exerciseDto.IdExercise} no existe o no pertenece a este gimnasio.");
+                            // Crear un nuevo ejercicio
+                            var newExercise = new Exercises
+                            {
+                                ExerciseTitle = exerciseDto.NewExercise.Title,
+                                ExerciseDescription = exerciseDto.NewExercise.Description,
+                                Duration = exerciseDto.NewExercise.Duration,
+                                VideoURL = exerciseDto.NewExercise.VideoURL,
+                                ImageURL = exerciseDto.NewExercise.ImageURL,
+                                IdGym = gymID,
+                                IdMuscleGroup = exerciseDto.NewExercise.IdMuscleGroup ?? null,
+                                CreatedAt = DateTime.Now,
+                                UpdatedAt = DateTime.Now,
+                                IsActive = true
+                            };
+
+                            var exerciseCreated = await _unitOfWork.ExerciseRepository.CreateExercise(newExercise);
+                            if (!exerciseCreated)
+                                throw new Exception($"No se pudo crear el ejercicio '{exerciseDto.NewExercise.Title}'.");
+
+                            exerciseDto.IdExercise = newExercise.ExerciseId; // para uso posterior
                         }
-                        exerciseId = existingExercise.ExerciseId;
-                    }
-                    else if (exerciseDto.NewExercise != null)
-                    {
-                        // Crear un nuevo ejercicio
-                        var newExercise = new Exercises
+                        else
                         {
-                            ExerciseTitle = exerciseDto.NewExercise.Title,
-                            ExerciseDescription = exerciseDto.NewExercise.Description,
-                            Duration = exerciseDto.NewExercise.Duration,
-                            VideoURL = exerciseDto.NewExercise.VideoURL,
-                            ImageURL = exerciseDto.NewExercise.ImageURL,
-                            IdGym = gymID,
-                            IdMuscleGroup = exerciseDto.NewExercise.IdMuscleGroup ?? null,
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now,
-                            IsActive = true
-                        };
+                            // Validar que el ejercicio existe
+                            var existingExercise = await _unitOfWork.ExerciseRepository
+                                                                .GetExerciseById(exerciseDto.IdExercise.Value);
 
-                        var exerciseCreated = await _unitOfWork.ExerciseRepository.CreateExercise(newExercise);
-                        if (!exerciseCreated)
-                        {
-                            throw new Exception($"No se pudo crear el ejercicio '{exerciseDto.NewExercise.Title}'.");
+                            if (existingExercise == null || existingExercise.IdGym != gymID)
+                                throw new Exception($"El ejercicio con ID {exerciseDto.IdExercise} no existe o no pertenece a este gimnasio.");
                         }
 
-                        exerciseId = newExercise.ExerciseId;
-                    }
-                    else
-                    {
-                        throw new Exception("Debe proporcionar un ejercicio existente o los datos para crear uno nuevo.");
-                    }
+                        // 5.2) Buscar / crear la relación en RoutineExercises
+                        var routineExercise = await _unitOfWork.RoutineExerciseRepository
+                                        .GetRoutineExerciseById(exerciseDto.RoutineExerciseId ?? 0);
 
-                    // Asociar ejercicio a la rutina si no está ya asociado
-                    var isAssociated = await _unitOfWork.RoutineExerciseRepository.IsExerciseInRoutine(updateRoutineDto.RoutineId, exerciseId);
-                    if (!isAssociated)
-                    {
-                        var routineExercise = new RoutineExercises
+                        if (routineExercise == null)
                         {
-                            IdRoutine = updateRoutineDto.RoutineId,
-                            IdExercise = exerciseId,
-                            Order = updateRoutineDto.Exercises.IndexOf(exerciseDto) + 1,
-                            CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now
-                        };
-
-                        var routineExerciseCreated = await _unitOfWork.RoutineExerciseRepository.CreateRoutineExercise(routineExercise);
-                        if (!routineExerciseCreated)
-                        {
-                            throw new Exception($"No se pudo asociar el ejercicio con ID {exerciseId} a la rutina.");
+                            // Verificar si ya existe una relación por (RoutineId, ExerciseId)
+                            routineExercise = await _unitOfWork.RoutineExerciseRepository
+                                                 .GetRoutineExerciseByRoutineAndExercise(
+                                                     updateRoutineDto.RoutineId,
+                                                     exerciseDto.IdExercise.Value
+                                                 );
                         }
+
+                        if (routineExercise == null)
+                        {
+                            // Crear la relación
+                            var newRoutineExercise = new RoutineExercises
+                            {
+                                IdRoutine = updateRoutineDto.RoutineId,
+                                IdExercise = exerciseDto.IdExercise.Value,
+                                Order = updateRoutineDto.Exercises.IndexOf(exerciseDto) + 1,
+                                CreatedAt = DateTime.Now,
+                                UpdatedAt = DateTime.Now,
+                                IsActive = true
+                            };
+
+                            var routineExerciseCreated =
+                                await _unitOfWork.RoutineExerciseRepository.CreateRoutineExercise(newRoutineExercise);
+
+                            if (!routineExerciseCreated)
+                                throw new Exception($"No se pudo asociar el ejercicio con ID {exerciseDto.IdExercise} a la rutina.");
+
+                            routineExercise = newRoutineExercise;
+                        }
+
+                        // 5.3) Manejar sets
+                        long routineExerciseId = routineExercise.RoutineExerciseId;
 
                         foreach (var setDto in exerciseDto.Sets)
                         {
-                            var routineExerciseSet = new RoutineExerciseSets
+                            if (setDto.SetId.HasValue)
                             {
-                                IdRoutineExercise = routineExercise.RoutineExerciseId,
-                                SetNumber = setDto.SetNumber,
-                                Reps = setDto.Reps,
-                                Weight = setDto.Weight,
-                                CreatedAt = DateTime.Now,
-                                UpdatedAt = DateTime.Now
-                            };
+                                // Actualizar set existente
+                                var existingSet = await _unitOfWork.RoutineExerciseSetsRepository
+                                                                   .GetRoutineExerciseSetsByIdAsync(setDto.SetId.Value);
 
-                            var setCreated = await _unitOfWork.RoutineExerciseSetsRepository.CreateRoutineExerciseSets(routineExerciseSet);
-                            if (!setCreated)
+                                if (existingSet == null)
+                                    throw new Exception($"Set con ID {setDto.SetId.Value} no existe.");
+
+                                if (existingSet.IdRoutineExercise != routineExerciseId)
+                                    throw new Exception("El set no corresponde al RoutineExercise actual.");
+
+                                existingSet.SetNumber = setDto.SetNumber;
+                                existingSet.Reps = setDto.Reps ?? existingSet.Reps;
+                                existingSet.Weight = setDto.Weight ?? existingSet.Weight;
+                                existingSet.UpdatedAt = DateTime.UtcNow;
+
+                                var setUpdated = await _unitOfWork.RoutineExerciseSetsRepository
+                                                                  .UpdateRoutineExerciseSets(existingSet);
+
+                                if (!setUpdated)
+                                    throw new Exception($"No se pudo actualizar el set con ID {setDto.SetId}.");
+                            }
+                            else
                             {
-                                throw new Exception($"No se pudo crear el set número {setDto.SetNumber} para el ejercicio con ID {exerciseId}.");
+                                // Crear nuevo set
+                                var newSet = new RoutineExerciseSets
+                                {
+                                    IdRoutineExercise = routineExerciseId,
+                                    SetNumber = setDto.SetNumber,
+                                    Reps = setDto.Reps,
+                                    Weight = setDto.Weight,
+                                    CreatedAt = DateTime.UtcNow,
+                                    UpdatedAt = DateTime.UtcNow,
+                                    IsActive = true
+                                };
+
+                                var setCreated = await _unitOfWork.RoutineExerciseSetsRepository.CreateRoutineExerciseSets(newSet);
+                                if (!setCreated)
+                                    throw new Exception("No se pudo crear el nuevo set.");
                             }
                         }
                     }

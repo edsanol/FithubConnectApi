@@ -32,6 +32,18 @@ namespace Infrastructure.Persistences.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
+        public async Task<RoutineExercises?> GetRoutineExerciseById(long routineExerciseId)
+        {
+            return await _context.RoutineExercises
+                .FirstOrDefaultAsync(x => x.RoutineExerciseId == routineExerciseId);
+        }
+
+        public async Task<RoutineExercises?> GetRoutineExerciseByRoutineAndExercise(long routineId, long exerciseId)
+        {
+            return await _context.RoutineExercises
+                .FirstOrDefaultAsync(x => x.IdRoutine == routineId && x.IdExercise == exerciseId);
+        }
+
         public async Task<bool> IsExerciseInRoutine(long routineId, long exerciseId)
         {
             return await _context.RoutineExercises
