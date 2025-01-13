@@ -4,7 +4,7 @@
     {
         public int HistoricalSetID { get; set; }
 
-        public int IdRoutineExercise { get; set; }
+        public long IdRoutineExercise { get; set; }
 
         public int SetNumber { get; set; }
 
