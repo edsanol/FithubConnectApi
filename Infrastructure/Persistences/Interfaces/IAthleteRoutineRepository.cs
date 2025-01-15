@@ -8,5 +8,6 @@ namespace Infrastructure.Persistences.Interfaces
         Task<List<AthleteRoutines>> GetAssignmentsByRoutineAndAthletes(long routineId, IEnumerable<int> athleteIds);
         Task<AthleteRoutines> GetAthleteRoutineByRoutineAndAthlete(long routineId, int athleteId);
         Task<bool> UpdateAthleteRoutine(AthleteRoutines athleteRoutine);
+        Task<List<int>> GetAthleteIdsByRoutineId(long routineId);
     }
 }

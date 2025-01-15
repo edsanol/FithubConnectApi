@@ -20,6 +20,14 @@ namespace Infrastructure.Persistences.Repositories
             return await _context.SaveChangesAsync() > 0;
         }
 
+        public async Task<List<int>> GetAthleteIdsByRoutineId(long routineId)
+        {
+            return await _context.AthleteRoutines
+                .Where(x => x.IdRoutine == routineId)
+                .Select(x => x.IdAthlete)
+                .ToListAsync();
+        }
+
         public async Task<List<AthleteRoutines>> GetAssignmentsByRoutineAndAthletes(long routineId, IEnumerable<int> athleteIds)
         {
             return await _context.AthleteRoutines

@@ -16,12 +16,14 @@ namespace Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IJwtHandler _jwtHandler;
         private readonly DbFithubContext _context;
+        private readonly IPushNotificationService _pushNotificationService;
 
-        public RoutineApplication(IJwtHandler jwtHandler, DbFithubContext context, IUnitOfWork unitOfWork)
+        public RoutineApplication(IJwtHandler jwtHandler, DbFithubContext context, IUnitOfWork unitOfWork, IPushNotificationService pushNotificationService)
         {
             _unitOfWork = unitOfWork;
             _jwtHandler = jwtHandler;
             _context = context;
+            _pushNotificationService = pushNotificationService;
         }
 
         public async Task<BaseResponse<bool>> CreateExercise(NewExerciseRequestDto createExerciseRequestDto)
@@ -171,7 +173,8 @@ namespace Application.Services
                             IdExercise = exerciseId,
                             Order = createRoutineRequestDto.Exercises.IndexOf(exerciseDto) + 1,
                             CreatedAt = DateTime.Now,
-                            UpdatedAt = DateTime.Now
+                            UpdatedAt = DateTime.Now,
+                            IsActive = true
                         };
 
                         var routineExerciseCreated = await _unitOfWork.RoutineExerciseRepository.CreateRoutineExercise(routineExercise);
@@ -189,7 +192,8 @@ namespace Application.Services
                                 Reps = setDto.Reps,
                                 Weight = setDto.Weight,
                                 CreatedAt = DateTime.Now,
-                                UpdatedAt = DateTime.Now
+                                UpdatedAt = DateTime.Now,
+                                IsActive = true
                             };
 
                             var setCreated = await _unitOfWork.RoutineExerciseSetsRepository.CreateRoutineExerciseSets(routineExerciseSet);
@@ -725,6 +729,22 @@ namespace Application.Services
 
             try
             {
+                var channel = await _unitOfWork.ChannelRepository.GetChannelById(sendRoutineToChannelRequestDto.ChannelId);
+                if (channel == null || channel.IdGym != gymID)
+                {
+                    throw new Exception("Canal no encontrado o no pertenece al gimnasio.");
+                }
+
+                var routine = await _unitOfWork.RoutineRepository.GetRoutineById(sendRoutineToChannelRequestDto.RoutineId);
+                if (routine == null)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Rutina no encontrada.";
+                    return response;
+                }
+
+                string routineName = routine.Title;
+
                 var athletesByChannel = await _unitOfWork.ChannelUsersRepository.GetAllAthleteIdsByChannel(sendRoutineToChannelRequestDto.ChannelId);
 
                 var existingAssignments = await _unitOfWork.AthleteRoutineRepository.GetAssignmentsByRoutineAndAthletes(
@@ -766,6 +786,31 @@ namespace Application.Services
                         throw new Exception("No se pudieron crear las asignaciones de rutina para los atletas.");
                     }
                 }
+
+                var notification = new Notifications
+                {
+                    IdChannel = sendRoutineToChannelRequestDto.ChannelId,
+                    Message = $"La rutina '{routineName}' está lista para llevar tu entrenamiento al próximo nivel. ¡Es tu momento de brillar! ✨ Haz clic para comenzar. 🚀",
+                    SendAt = DateTime.Now,
+                    Type = "routine",
+                    Title = "¡Tu nueva rutina está lista! 💪"
+                };
+
+                var saveResult = await _unitOfWork.NotificationRepository.SaveNotification(notification);
+
+                if (!saveResult)
+                {
+                    throw new Exception("Error al guardar la notificación");
+                }
+
+                var deviceTokens = await _unitOfWork.UserDeviceTokenRepository
+                    .GetDeviceTokensByAthleteIds(athletesByChannel);
+
+                await _pushNotificationService.SendPushNotificationAsync(
+                    deviceTokens,
+                    "¡Tu nueva rutina está lista! 💪",
+                    $"La rutina '{routineName}' está lista para llevar tu entrenamiento al próximo nivel. ¡Es tu momento de brillar! ✨ Haz clic para comenzar. 🚀"
+                );
 
                 response.IsSuccess = true;
                 response.Message = "La rutina fue enviada exitosamente a los atletas del canal.";
@@ -1032,6 +1077,20 @@ namespace Application.Services
                         }
                     }
                 }
+
+                var athleteIds = await _unitOfWork.AthleteRoutineRepository.GetAthleteIdsByRoutineId(updateRoutineDto.RoutineId);
+                if (athleteIds == null)
+                {
+                    throw new Exception("No se pudieron obtener los atletas asignados a la rutina.");
+                }
+
+                var deviceTokens = await _unitOfWork.UserDeviceTokenRepository.GetDeviceTokensByAthleteIds(athleteIds);
+
+                await _pushNotificationService.SendPushNotificationAsync(
+                    deviceTokens,
+                    "¡Nueva versión, nuevos retos!",
+                    $"La rutina '{routine.Title}' ha sido actualizada con mejoras para potenciar tus entrenamientos. ¡Explora los cambios y alcanza el siguiente nivel! 🔥"
+                );
 
                 await transaction.CommitAsync();
 

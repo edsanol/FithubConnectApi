@@ -1,4 +1,5 @@
-﻿using Application.Commons.Bases;
+﻿using Api.Hubs;
+using Application.Commons.Bases;
 using Application.Dtos.Request;
 using Application.Dtos.Response;
 using Application.Interfaces;
@@ -6,6 +7,7 @@ using Infrastructure.Commons.Bases.Request;
 using Infrastructure.Commons.Bases.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Controllers
 {
@@ -15,10 +17,12 @@ namespace Api.Controllers
     public class RoutineController : ControllerBase
     {
         private readonly IRoutineApplication _routineApplication;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public RoutineController(IRoutineApplication routineApplication)
+        public RoutineController(IRoutineApplication routineApplication, IHubContext<NotificationHub> hubContext)
         {
             _routineApplication = routineApplication;
+            _hubContext = hubContext;
         }
 
         [HttpPost("CreateRoutine")]
@@ -158,12 +162,14 @@ namespace Api.Controllers
         public async Task<ActionResult<BaseResponse<bool>>> SendRoutineToChannel([FromBody] SendRoutineToChannelRequestDto sendRoutineToChannelRequestDto)
         {
             var response = await _routineApplication.SendRoutineToChannel(sendRoutineToChannelRequestDto);
-            if (response.IsSuccess == false)
+
+            if (response.IsSuccess)
             {
-                return BadRequest(response);
+                await _hubContext.Clients.Group(sendRoutineToChannelRequestDto.ChannelId.ToString())
+                    .SendAsync("ReceiveMessage", sendRoutineToChannelRequestDto.ChannelId, "Nueva rutina");
             }
 
-            return Ok(response);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
         [HttpPut("DesactivateRoutineToAthlete")]
