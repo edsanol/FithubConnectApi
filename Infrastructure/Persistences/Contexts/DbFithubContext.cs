@@ -74,6 +74,20 @@ public partial class DbFithubContext : DbContext
 
     public virtual DbSet<UserDeviceToken> UserDeviceToken { get; set; }
 
+    public virtual DbSet<MuscleGroups> MuscleGroups { get; set; }
+
+    public virtual DbSet<Routines> Routines { get; set; }
+
+    public virtual DbSet<Exercises> Exercises { get; set; }
+
+    public virtual DbSet<RoutineExercises> RoutineExercises { get; set; }
+
+    public virtual DbSet<AthleteRoutines> AthleteRoutines { get; set; }
+
+    public virtual DbSet<RoutineExerciseSets> RoutineExerciseSets { get; set; }
+
+    public virtual DbSet<HistoricalSets> HistoricalSets { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasAnnotation("Relational:Collation", "Modern_Spanish_CI_AS");

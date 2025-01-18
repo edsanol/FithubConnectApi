@@ -45,4 +45,8 @@ public partial class Gym
     public virtual ICollection<GymAccessType> GymAccessTypes { get; set; } = new List<GymAccessType>();
 
     public virtual ICollection<Channels> Channels { get; set; } = new List<Channels>();
+
+    public virtual ICollection<Routines> Routines { get; set; } = new List<Routines>();
+
+    public virtual ICollection<Exercises> Exercises { get; set; } = new List<Exercises>();
 }

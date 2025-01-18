@@ -1194,7 +1194,8 @@ namespace Application.Services
             var key = _cryptographyApplication.GenerateUserSpecificKey(secret, salt);
             var iv = _cryptographyApplication.GenerateIV(salt);
 
-            string decryptedBase64 = _cryptographyApplication.DecryptWithAes(gymID, key, iv);
+            string encryptedId = Uri.UnescapeDataString(gymID);
+            string decryptedBase64 = _cryptographyApplication.DecryptWithAes(encryptedId, key, iv);
 
             // decryptedBase64 es una cadena base64 que contiene "email|password" en bytes
             byte[] decryptedBytes = Convert.FromBase64String(decryptedBase64);

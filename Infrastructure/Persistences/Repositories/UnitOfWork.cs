@@ -51,6 +51,20 @@ namespace Infrastructure.Persistences.Repositories
 
         public IUserDeviceTokenRepository UserDeviceTokenRepository { get; private set; }
 
+        public IRoutineRepository RoutineRepository { get; private set; }
+
+        public IExerciseRepository ExerciseRepository { get; private set; }
+
+        public IRoutineExerciseRepository RoutineExerciseRepository { get; private set; }
+
+        public IRoutineExerciseSetsRepository RoutineExerciseSetsRepository { get; private set; }
+
+        public IAthleteRoutineRepository AthleteRoutineRepository { get; private set; }
+
+        public IMuscleGroupRepository MuscleGroupRepository { get; private set; }
+
+        public IHistoricalSetsRepository HistoricalSetsRepository { get; private set; }
+
         public UnitOfWork(DbFithubContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -76,6 +90,13 @@ namespace Infrastructure.Persistences.Repositories
             ChannelUsersRepository = new ChannelUsersRepository(_context) ?? throw new ArgumentNullException(nameof(ChannelUsersRepository));
             NotificationRepository = new NotificationRepository(_context) ?? throw new ArgumentNullException(nameof(NotificationRepository));
             UserDeviceTokenRepository = new UserDeviceTokenRepository(_context) ?? throw new ArgumentNullException(nameof(UserDeviceTokenRepository));
+            RoutineRepository = new RoutineRepository(_context) ?? throw new ArgumentNullException(nameof(RoutineRepository));
+            ExerciseRepository = new ExerciseRepository(_context) ?? throw new ArgumentNullException(nameof(ExerciseRepository));
+            RoutineExerciseRepository = new RoutineExerciseRepository(_context) ?? throw new ArgumentNullException(nameof(RoutineExerciseRepository));
+            RoutineExerciseSetsRepository = new RoutineExerciseSetsRepository(_context) ?? throw new ArgumentNullException(nameof(RoutineExerciseSetsRepository));
+            AthleteRoutineRepository = new AthleteRoutineRepository(_context) ?? throw new ArgumentNullException(nameof(AthleteRoutineRepository));
+            MuscleGroupRepository = new MuscleGroupRepository(_context) ?? throw new ArgumentNullException(nameof(MuscleGroupRepository));
+            HistoricalSetsRepository = new HistoricalSetsRepository(_context) ?? throw new ArgumentNullException(nameof(HistoricalSetsRepository));
         }
 
         public void Dispose()
