@@ -21,6 +21,6 @@ namespace Application.Interfaces
         Task<BaseResponse<List<MuscleGroupsResponseDto>>> GetMuscleGroups();
         Task<BaseResponse<bool>> SendRoutineToChannel(SendRoutineToChannelRequestDto sendRoutineToChannelRequestDto);
         Task<BaseResponse<bool>> DesactivateRoutineToAthlete(long routneId, int athleteId);
-        Task<BaseResponse<bool>> InsertAthleteHistoricalSets(InsertAthleteHistoricalSetsRequestDto request);
+        Task<BaseResponse<bool>> InsertAthleteHistoricalSets(List<InsertAthleteHistoricalSetsRequestDto> request);
     }
 }

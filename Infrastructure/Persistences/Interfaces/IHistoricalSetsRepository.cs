@@ -4,6 +4,6 @@ namespace Infrastructure.Persistences.Interfaces
 {
     public interface IHistoricalSetsRepository
     {
-        Task<bool> InsertHistoricalSets(HistoricalSets historicalSets);
+        Task<bool> InsertHistoricalSets(List<HistoricalSets> historicalSets);
     }
 }

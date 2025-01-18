@@ -556,6 +556,7 @@ namespace Application.Services
                         MuscleGroupName = routine.IdMuscleGroupNavigation.MuscleGroupName,
                         ImageURL = routine.ImageURL,
                         IsActive = routine.IsActive,
+                        Status = routine.AthleteRoutines.FirstOrDefault(a => a.IdAthlete == athleteId)?.Status,
                         Exercises = routine.RoutineExercises.Select(exercise => new RoutineExerciseResponseDto
                         {
                             RoutineExerciseId = exercise.RoutineExerciseId,
@@ -660,7 +661,7 @@ namespace Application.Services
             return response;
         }
 
-        public async Task<BaseResponse<bool>> InsertAthleteHistoricalSets(InsertAthleteHistoricalSetsRequestDto request)
+        public async Task<BaseResponse<bool>> InsertAthleteHistoricalSets(List<InsertAthleteHistoricalSetsRequestDto> request)
         {
             var response = new BaseResponse<bool>();
             string role = _jwtHandler.GetRoleFromToken();
@@ -675,7 +676,7 @@ namespace Application.Services
 
             try
             {
-                var routineExercise = await _unitOfWork.RoutineExerciseRepository.GetRoutineExerciseById(request.IdRoutineExercise);
+                var routineExercise = await _unitOfWork.RoutineExerciseRepository.GetRoutineExerciseById(request[0].IdRoutineExercise);
                 if (routineExercise == null)
                 {
                     response.IsSuccess = false;
@@ -683,21 +684,52 @@ namespace Application.Services
                     return response;
                 }
 
-                var historicalSet = new HistoricalSets
-                {
-                    IdRoutineExercise = request.IdRoutineExercise,
-                    IdAthlete = athleteID,
-                    SetNumber = request.SetNumber,
-                    Reps = request.Reps,
-                    Weight = request.Weight,
-                    PerformedAt = DateTime.Now
-                };
+                var historicalSets = new List<HistoricalSets>();
 
-                var historicalSetCreated = await _unitOfWork.HistoricalSetsRepository.InsertHistoricalSets(historicalSet);
+                foreach (var set in request)
+                {
+                    var historicalSet = new HistoricalSets
+                    {
+                        IdAthlete = athleteID,
+                        IdRoutineExercise = set.IdRoutineExercise,
+                        SetNumber = set.SetNumber,
+                        Reps = set.Reps,
+                        Weight = set.Weight,
+                        PerformedAt = DateTime.Now
+                    };
+
+                    historicalSets.Add(historicalSet);
+                }
+
+                var historicalSetCreated = await _unitOfWork.HistoricalSetsRepository.InsertHistoricalSets(historicalSets);
                 if (!historicalSetCreated)
                 {
                     response.IsSuccess = false;
                     response.Message = "No se pudo crear el set histórico.";
+                    return response;
+                }
+
+                var athleteRoutine = await _unitOfWork.AthleteRoutineRepository.GetAthleteRoutineByRoutineAndAthlete(routineExercise.IdRoutine, athleteID);
+                if (athleteRoutine == null)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "No se encontró la asignación de rutina para el atleta.";
+                    return response;
+                }
+
+                athleteRoutine.IdAthlete = athleteRoutine.IdAthlete;
+                athleteRoutine.IdRoutine = athleteRoutine.IdRoutine;
+                athleteRoutine.Status = "Completed";
+                athleteRoutine.StartDate = athleteRoutine.StartDate;
+                athleteRoutine.EndDate = athleteRoutine.EndDate;
+                athleteRoutine.CreatedAt = athleteRoutine.CreatedAt;
+                athleteRoutine.UpdatedAt = DateTime.Now;
+
+                var athleteRoutineUpdated = await _unitOfWork.AthleteRoutineRepository.UpdateAthleteRoutine(athleteRoutine);
+                if (!athleteRoutineUpdated)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "No se pudo actualizar la asignación de rutina.";
                     return response;
                 }
 

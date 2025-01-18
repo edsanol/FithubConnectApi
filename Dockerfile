@@ -21,6 +21,8 @@ RUN dotnet build "Api.csproj" -c Release -o /app/build
 # Etapa de publicación
 FROM build AS publish
 RUN dotnet publish "Api.csproj" -c Release -o /app/publish
+# # Copiar archivo JSON de credenciales de Firebase
+# COPY fithub-connect-plus-firebase-adminsdk.json /app/firebase/
 
 # Etapa final
 FROM mcr.microsoft.com/dotnet/aspnet:7.0-alpine AS final

@@ -30,7 +30,8 @@ if (string.IsNullOrEmpty(jwtSecret))
     throw new Exception("JWT Secret is missing or empty.");
 }
 
-var firebaseCredentialsPath = builder.Configuration["Firebase:CredentialsPath"];
+var firebaseCredentialsPath = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS_PATH")
+    ?? builder.Configuration["Firebase:CredentialsPath"];
 if (string.IsNullOrEmpty(firebaseCredentialsPath))
 {
     throw new Exception("La ruta del archivo de credenciales de Firebase no está configurada.");

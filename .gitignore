@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 
 docker-compose.yml
+fithub-connect-plus-firebase-adminsdk.json

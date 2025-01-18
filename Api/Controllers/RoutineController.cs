@@ -185,7 +185,7 @@ namespace Api.Controllers
         }
 
         [HttpPost("InsertAthleteHistoricalSets")]
-        public async Task<ActionResult<BaseResponse<bool>>> InsertAthleteHistoricalSets([FromBody] InsertAthleteHistoricalSetsRequestDto request)
+        public async Task<ActionResult<BaseResponse<bool>>> InsertAthleteHistoricalSets([FromBody] List<InsertAthleteHistoricalSetsRequestDto> request)
         {
             var response = await _routineApplication.InsertAthleteHistoricalSets(request);
             if (response.IsSuccess == false)

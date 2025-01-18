@@ -13,9 +13,9 @@ namespace Infrastructure.Persistences.Repositories
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public async Task<bool> InsertHistoricalSets(HistoricalSets historicalSets)
+        public async Task<bool> InsertHistoricalSets(List<HistoricalSets> historicalSets)
         {
-            await _context.HistoricalSets.AddAsync(historicalSets);
+            await _context.HistoricalSets.AddRangeAsync(historicalSets);
             return await _context.SaveChangesAsync() > 0;
         }
     }
